@@ -1,5 +1,9 @@
 # Expense Categorizer
 
+[![CI](https://github.com/csatarij/expense-categorizer/actions/workflows/ci.yml/badge.svg)](https://github.com/csatarij/expense-categorizer/actions/workflows/ci.yml)
+[![Deploy](https://github.com/csatarij/expense-categorizer/actions/workflows/deploy.yml/badge.svg)](https://github.com/csatarij/expense-categorizer/actions/workflows/deploy.yml)
+[![codecov](https://codecov.io/gh/csatarij/expense-categorizer/branch/main/graph/badge.svg)](https://codecov.io/gh/csatarij/expense-categorizer)
+
 AI-powered expense tracking web application with progressive ML categorization.
 
 ## Tech Stack
