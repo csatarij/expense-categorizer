@@ -22,6 +22,10 @@ export default defineConfig({
         '**/*.d.ts',
         '**/*.config.*',
         '**/index.ts',
+        '**/*.{test,spec}.{js,ts,jsx,tsx}',
+        'src/main.tsx',
+        'dist/',
+        'tests/',
       ],
       thresholds: {
         lines: 80,
