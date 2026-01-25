@@ -1,0 +1,11 @@
+Date,Description,Amount
+2024-01-01,Valid Transaction,-50.00
+2024-01-02,"Missing closing quote,-25.00
+,Empty Date Field,-30.00
+2024-01-04,Missing Amount,
+2024-01-05,Extra,Comma,In,Description,-15.00
+2024-13-45,Invalid Date Format,-20.00
+2024-01-07,Negative Zero Amount,-0.00
+2024-01-08,Special Chars: @#$%^&*(),-45.00
+2024-01-09,Unicode: café résumé naïve,-12.50
+2024-01-10,Very Long Description That Goes On And On And On And On And On And On And On And On And On,-99.99
