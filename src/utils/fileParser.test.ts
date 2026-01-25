@@ -35,7 +35,7 @@ function createMockXLSXFile(
   const ws = XLSX.utils.aoa_to_sheet(data);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-  const buffer = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
+  const buffer = XLSX.write(wb, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer;
   const blob = new Blob([buffer], {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   });
@@ -48,20 +48,30 @@ describe('fileParser', () => {
   describe('validateFileSize', () => {
     it('should accept files within size limit', () => {
       const file = createMockFile('test content', 'test.csv');
-      expect(() => validateFileSize(file, 1024 * 1024)).not.toThrow();
+      expect(() => {
+        validateFileSize(file, 1024 * 1024);
+      }).not.toThrow();
     });
 
     it('should reject files exceeding size limit', () => {
       const largeContent = 'x'.repeat(1024 * 1024 + 1); // Just over 1MB
       const file = createMockFile(largeContent, 'large.csv');
-      expect(() => validateFileSize(file, 1024 * 1024)).toThrow(FileParserError);
-      expect(() => validateFileSize(file, 1024 * 1024)).toThrow('exceeds maximum allowed size');
+      expect(() => {
+        validateFileSize(file, 1024 * 1024);
+      }).toThrow(FileParserError);
+      expect(() => {
+        validateFileSize(file, 1024 * 1024);
+      }).toThrow('exceeds maximum allowed size');
     });
 
     it('should reject empty files', () => {
       const file = createMockFile('', 'empty.csv');
-      expect(() => validateFileSize(file, 1024 * 1024)).toThrow(FileParserError);
-      expect(() => validateFileSize(file, 1024 * 1024)).toThrow('File is empty');
+      expect(() => {
+        validateFileSize(file, 1024 * 1024);
+      }).toThrow(FileParserError);
+      expect(() => {
+        validateFileSize(file, 1024 * 1024);
+      }).toThrow('File is empty');
     });
 
     it('should include file size in error message', () => {
@@ -131,8 +141,8 @@ describe('fileParser', () => {
       const result = await parseCSV(file);
 
       expect(result).toHaveLength(3);
-      expect(result[0]!.Description).toBe('First');
-      expect(result[2]!.Description).toBe('Third');
+      expect(result[0]?.Description).toBe('First');
+      expect(result[2]?.Description).toBe('Third');
     });
 
     it('should handle CSV with special characters', async () => {
@@ -142,7 +152,7 @@ describe('fileParser', () => {
       const result = await parseCSV(file);
 
       expect(result).toHaveLength(1);
-      expect(result[0]!.Description).toBe('Café, résumé & naïve');
+      expect(result[0]?.Description).toBe('Café, résumé & naïve');
     });
 
     it('should handle CSV with quoted fields containing commas', async () => {
@@ -152,7 +162,7 @@ describe('fileParser', () => {
       const result = await parseCSV(file);
 
       expect(result).toHaveLength(1);
-      expect(result[0]!.Description).toBe('Company, Inc. Payment');
+      expect(result[0]?.Description).toBe('Company, Inc. Payment');
     });
 
     it('should handle empty values', async () => {
@@ -161,7 +171,7 @@ describe('fileParser', () => {
       const result = await parseCSV(file);
 
       expect(result).toHaveLength(1);
-      expect(result[0]!.Description).toBe('');
+      expect(result[0]?.Description).toBe('');
     });
   });
 
@@ -175,7 +185,7 @@ describe('fileParser', () => {
       const result = await parseXLSX(file);
 
       expect(result).toHaveLength(1);
-      expect(result[0]!.Description).toBe('Test Transaction');
+      expect(result[0]?.Description).toBe('Test Transaction');
     });
 
     it('should handle XLSX with multiple rows', async () => {
@@ -189,8 +199,8 @@ describe('fileParser', () => {
       const result = await parseXLSX(file);
 
       expect(result).toHaveLength(3);
-      expect(result[0]!.Description).toBe('First');
-      expect(result[2]!.Description).toBe('Third');
+      expect(result[0]?.Description).toBe('First');
+      expect(result[2]?.Description).toBe('Third');
     });
 
     it('should handle XLSX with special characters', async () => {
@@ -202,7 +212,7 @@ describe('fileParser', () => {
       const result = await parseXLSX(file);
 
       expect(result).toHaveLength(1);
-      expect(result[0]!.Description).toBe('Café résumé naïve');
+      expect(result[0]?.Description).toBe('Café résumé naïve');
     });
 
     it('should handle XLSX with numeric values', async () => {
@@ -214,7 +224,7 @@ describe('fileParser', () => {
       const result = await parseXLSX(file);
 
       expect(result).toHaveLength(1);
-      expect(result[0]!.Amount).toBe('-123.45');
+      expect(result[0]?.Amount).toBe('-123.45');
     });
   });
 
@@ -353,9 +363,9 @@ describe('fileParser', () => {
       const file = createMockFile(csvContent, 'test.csv');
       const result = await parseFile(file);
 
-      expect(result.data[0]!.Name).toBe('José');
-      expect(result.data[0]!.City).toBe('São Paulo');
-      expect(result.data[1]!.Name).toBe('François');
+      expect(result.data[0]?.Name).toBe('José');
+      expect(result.data[0]?.City).toBe('São Paulo');
+      expect(result.data[1]?.Name).toBe('François');
     });
 
     it('should handle emoji in data', async () => {
@@ -363,7 +373,7 @@ describe('fileParser', () => {
       const file = createMockFile(csvContent, 'test.csv');
       const result = await parseFile(file);
 
-      expect(result.data[0]!.Note).toBe('Hello 👋 World 🌍');
+      expect(result.data[0]?.Note).toBe('Hello 👋 World 🌍');
     });
   });
 
@@ -374,9 +384,9 @@ describe('fileParser', () => {
       const result = await parseFile(file);
 
       expect(result.data).toHaveLength(3);
-      expect(result.data[0]!.B).toBe('');
-      expect(result.data[1]!.A).toBe('');
-      expect(result.data[1]!.C).toBe('');
+      expect(result.data[0]?.B).toBe('');
+      expect(result.data[1]?.A).toBe('');
+      expect(result.data[1]?.C).toBe('');
     });
 
     it('should handle inconsistent row lengths gracefully', async () => {

@@ -52,7 +52,7 @@ export function validateFileSize(file: File, maxSize: number): void {
  * @throws FileParserError if file type is not supported
  */
 export function detectFileType(fileName: string): 'csv' | 'xlsx' {
-  const extension = fileName.toLowerCase().split('.').pop();
+  const extension = fileName.toLowerCase().split('.').pop() ?? '';
 
   if (extension === 'csv') {
     return 'csv';
@@ -74,8 +74,12 @@ export function detectFileType(fileName: string): 'csv' | 'xlsx' {
 async function readFileAsArrayBuffer(file: File): Promise<ArrayBuffer> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as ArrayBuffer);
-    reader.onerror = () => reject(new FileParserError('Failed to read file', 'READ_ERROR'));
+    reader.onload = () => {
+      resolve(reader.result as ArrayBuffer);
+    };
+    reader.onerror = () => {
+      reject(new FileParserError('Failed to read file', 'READ_ERROR'));
+    };
     reader.readAsArrayBuffer(file);
   });
 }
@@ -97,7 +101,10 @@ export async function parseCSV(file: File): Promise<Record<string, unknown>[]> {
       throw new FileParserError('CSV file contains no data', 'NO_DATA');
     }
 
-    const worksheet = workbook.Sheets[firstSheetName]!;
+    const worksheet = workbook.Sheets[firstSheetName];
+    if (!worksheet) {
+      throw new FileParserError('CSV file contains no data', 'NO_DATA');
+    }
     const data = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet, {
       defval: '',
       raw: false,
@@ -132,7 +139,10 @@ export async function parseXLSX(file: File): Promise<Record<string, unknown>[]> 
       throw new FileParserError('XLSX file contains no sheets', 'NO_DATA');
     }
 
-    const worksheet = workbook.Sheets[firstSheetName]!;
+    const worksheet = workbook.Sheets[firstSheetName];
+    if (!worksheet) {
+      throw new FileParserError('XLSX file contains no sheets', 'NO_DATA');
+    }
     const data = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet, {
       defval: '',
       raw: false,
