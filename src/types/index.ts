@@ -89,6 +89,24 @@ export interface LearningPattern {
 }
 
 /**
+ * Global application state for state management
+ */
+export interface AppState {
+  transactions: Transaction[];
+  categories: CategoryTaxonomy;
+  learningPatterns: LearningPattern[];
+  parsedFile: ParsedFile | null;
+  isLoading: boolean;
+  error: string | null;
+  selectedTransactionIds: string[];
+  filters: {
+    category?: string;
+    dateRange?: { start: Date; end: Date };
+    searchQuery?: string;
+  };
+}
+
+/**
  * Legacy interfaces for backward compatibility
  */
 export interface Expense {
