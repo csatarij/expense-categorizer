@@ -19,6 +19,30 @@ function createMockTransaction(overrides: Partial<Transaction> = {}): Transactio
   };
 }
 
+/**
+ * Helper to get the category select (first combobox in a row)
+ */
+function getCategorySelect(index = 0): HTMLElement {
+  const comboboxes = screen.getAllByRole('combobox');
+  const element = comboboxes[index * 2];
+  if (!element) {
+    throw new Error(`Category select at index ${index} not found`);
+  }
+  return element;
+}
+
+/**
+ * Helper to get the subcategory select (second combobox in a row)
+ */
+function getSubcategorySelect(index = 0): HTMLElement {
+  const comboboxes = screen.getAllByRole('combobox');
+  const element = comboboxes[index * 2 + 1];
+  if (!element) {
+    throw new Error(`Subcategory select at index ${index} not found`);
+  }
+  return element;
+}
+
 describe('TransactionTable', () => {
   describe('rendering', () => {
     it('should display empty state when no transactions', () => {
@@ -136,7 +160,7 @@ describe('TransactionTable', () => {
       const transactions = [createMockTransaction()];
       render(<TransactionTable transactions={transactions} />);
 
-      const categorySelect = screen.getAllByRole('combobox')[0];
+      const categorySelect = getCategorySelect();
       expect(categorySelect).toBeInTheDocument();
 
       const categories = getCategoryNames();
@@ -149,7 +173,7 @@ describe('TransactionTable', () => {
       const transactions = [createMockTransaction()];
       render(<TransactionTable transactions={transactions} />);
 
-      const categorySelect = screen.getAllByRole('combobox')[0];
+      const categorySelect = getCategorySelect();
       expect(within(categorySelect).getByText('Select category')).toBeInTheDocument();
     });
 
@@ -157,7 +181,7 @@ describe('TransactionTable', () => {
       const transactions = [createMockTransaction({ category: 'Food & Dining' })];
       render(<TransactionTable transactions={transactions} />);
 
-      const categorySelect = screen.getAllByRole('combobox')[0];
+      const categorySelect = getCategorySelect();
       expect(categorySelect).toHaveValue('Food & Dining');
     });
 
@@ -172,7 +196,7 @@ describe('TransactionTable', () => {
         />
       );
 
-      const categorySelect = screen.getAllByRole('combobox')[0];
+      const categorySelect = getCategorySelect();
       await user.selectOptions(categorySelect, 'Shopping');
 
       expect(onCategoryChange).toHaveBeenCalledWith('tx-1', 'Shopping', undefined);
@@ -184,7 +208,7 @@ describe('TransactionTable', () => {
       const transactions = [createMockTransaction()];
       render(<TransactionTable transactions={transactions} />);
 
-      const subcategorySelect = screen.getAllByRole('combobox')[1];
+      const subcategorySelect = getSubcategorySelect();
       expect(subcategorySelect).toBeDisabled();
     });
 
@@ -192,7 +216,7 @@ describe('TransactionTable', () => {
       const transactions = [createMockTransaction({ category: 'Food & Dining' })];
       render(<TransactionTable transactions={transactions} />);
 
-      const subcategorySelect = screen.getAllByRole('combobox')[1];
+      const subcategorySelect = getSubcategorySelect();
       expect(subcategorySelect).not.toBeDisabled();
     });
 
@@ -200,7 +224,7 @@ describe('TransactionTable', () => {
       const transactions = [createMockTransaction({ category: 'Food & Dining' })];
       render(<TransactionTable transactions={transactions} />);
 
-      const subcategorySelect = screen.getAllByRole('combobox')[1];
+      const subcategorySelect = getSubcategorySelect();
       const subcategories = getSubcategories('Food & Dining');
 
       subcategories.forEach((subcategory) => {
@@ -217,7 +241,7 @@ describe('TransactionTable', () => {
       ];
       render(<TransactionTable transactions={transactions} />);
 
-      const subcategorySelect = screen.getAllByRole('combobox')[1];
+      const subcategorySelect = getSubcategorySelect();
       expect(subcategorySelect).toHaveValue('Groceries');
     });
 
@@ -234,7 +258,7 @@ describe('TransactionTable', () => {
         />
       );
 
-      const subcategorySelect = screen.getAllByRole('combobox')[1];
+      const subcategorySelect = getSubcategorySelect();
       await user.selectOptions(subcategorySelect, 'Restaurants');
 
       expect(onCategoryChange).toHaveBeenCalledWith(
@@ -271,7 +295,8 @@ describe('TransactionTable', () => {
     });
 
     it('should display dash when no confidence', () => {
-      const transactions = [createMockTransaction({ confidence: undefined })];
+      // Don't set confidence at all to test the undefined case
+      const transactions = [createMockTransaction()];
       render(<TransactionTable transactions={transactions} />);
 
       expect(screen.getByText('—')).toBeInTheDocument();
@@ -344,10 +369,8 @@ describe('TransactionTable', () => {
         />
       );
 
-      // Get all category dropdowns (every other combobox)
-      const comboboxes = screen.getAllByRole('combobox');
-      const secondCategorySelect = comboboxes[2]; // Index 2 is second row's category
-
+      // Get second row's category dropdown
+      const secondCategorySelect = getCategorySelect(1);
       await user.selectOptions(secondCategorySelect, 'Entertainment');
 
       expect(onCategoryChange).toHaveBeenCalledWith('tx-2', 'Entertainment', undefined);
@@ -355,18 +378,13 @@ describe('TransactionTable', () => {
   });
 
   describe('edge cases', () => {
-    it('should handle transaction with all optional fields undefined', () => {
-      const transactions = [
-        createMockTransaction({
-          category: undefined,
-          subcategory: undefined,
-          confidence: undefined,
-        }),
-      ];
+    it('should handle transaction with no optional fields set', () => {
+      // Create transaction without setting optional fields
+      const transactions = [createMockTransaction()];
       render(<TransactionTable transactions={transactions} />);
 
       expect(screen.getByText('—')).toBeInTheDocument();
-      const categorySelect = screen.getAllByRole('combobox')[0];
+      const categorySelect = getCategorySelect();
       expect(categorySelect).toHaveValue('');
     });
 
@@ -383,7 +401,7 @@ describe('TransactionTable', () => {
       const transactions = [createMockTransaction()];
       render(<TransactionTable transactions={transactions} />);
 
-      const categorySelect = screen.getAllByRole('combobox')[0];
+      const categorySelect = getCategorySelect();
 
       // Should not throw error when selecting without callback
       // Note: Value won't change as component is controlled by parent
