@@ -1,0 +1,159 @@
+import { useCallback } from 'react';
+import type { Transaction } from '@/types';
+import { getCategoryNames, getSubcategories } from '@/data/categories';
+
+export interface TransactionTableProps {
+  transactions: Transaction[];
+  onCategoryChange?: (id: string, category: string, subcategory?: string) => void;
+}
+
+export function TransactionTable({
+  transactions,
+  onCategoryChange,
+}: TransactionTableProps): React.JSX.Element {
+  const categories = getCategoryNames();
+
+  const formatAmount = (amount: number): string => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(Math.abs(amount));
+  };
+
+  const formatDate = (date: Date): string => {
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  const handleCategoryChange = useCallback(
+    (id: string, category: string) => {
+      onCategoryChange?.(id, category, undefined);
+    },
+    [onCategoryChange]
+  );
+
+  const handleSubcategoryChange = useCallback(
+    (id: string, category: string, subcategory: string) => {
+      onCategoryChange?.(id, category, subcategory);
+    },
+    [onCategoryChange]
+  );
+
+  if (transactions.length === 0) {
+    return (
+      <div className="py-8 text-center text-gray-500">
+        No transactions to display
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-6 overflow-x-auto rounded-lg border border-gray-200">
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+              Date
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+              Description
+            </th>
+            <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+              Amount
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+              Category
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+              Subcategory
+            </th>
+            <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+              Confidence
+            </th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-200 bg-white">
+          {transactions.map((transaction) => (
+            <tr
+              key={transaction.id}
+              className="transition-colors hover:bg-gray-50"
+            >
+              <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-900">
+                {formatDate(transaction.date)}
+              </td>
+              <td className="max-w-xs truncate px-4 py-3 text-sm text-gray-900">
+                {transaction.description}
+              </td>
+              <td
+                className={`whitespace-nowrap px-4 py-3 text-right text-sm font-medium ${
+                  transaction.amount < 0 ? 'text-red-600' : 'text-green-600'
+                }`}
+              >
+                {transaction.amount < 0 ? '-' : '+'}
+                {formatAmount(transaction.amount)}
+              </td>
+              <td className="whitespace-nowrap px-4 py-3 text-sm">
+                <select
+                  value={transaction.category || ''}
+                  onChange={(e) => {
+                    handleCategoryChange(transaction.id, e.target.value);
+                  }}
+                  className="block w-full rounded-md border-gray-300 text-sm focus:border-primary-500 focus:ring-primary-500"
+                >
+                  <option value="">Select category</option>
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              </td>
+              <td className="whitespace-nowrap px-4 py-3 text-sm">
+                <select
+                  value={transaction.subcategory || ''}
+                  onChange={(e) => {
+                    handleSubcategoryChange(
+                      transaction.id,
+                      transaction.category || '',
+                      e.target.value
+                    );
+                  }}
+                  disabled={!transaction.category}
+                  className="block w-full rounded-md border-gray-300 text-sm focus:border-primary-500 focus:ring-primary-500 disabled:bg-gray-100 disabled:text-gray-400"
+                >
+                  <option value="">Select subcategory</option>
+                  {transaction.category &&
+                    getSubcategories(transaction.category).map((sub) => (
+                      <option key={sub} value={sub}>
+                        {sub}
+                      </option>
+                    ))}
+                </select>
+              </td>
+              <td className="whitespace-nowrap px-4 py-3 text-center text-sm">
+                {transaction.confidence !== undefined ? (
+                  <span
+                    className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ${
+                      transaction.confidence >= 0.8
+                        ? 'bg-green-100 text-green-800'
+                        : transaction.confidence >= 0.5
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-gray-100 text-gray-800'
+                    }`}
+                  >
+                    {Math.round(transaction.confidence * 100)}%
+                  </span>
+                ) : (
+                  <span className="text-gray-400">—</span>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
