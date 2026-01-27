@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { FileUpload } from '@/components/FileUpload';
+import { TransactionTable } from '@/components/TransactionTable';
 import { parseFile, FileParserError } from '@/utils/fileParser';
 import type { ParsedFile, Transaction } from '@/types';
 
@@ -61,7 +62,6 @@ function App() {
       });
 
       setTransactions(newTransactions);
-      console.log(`Parsed ${String(newTransactions.length)} transactions`);
     } catch (err) {
       if (err instanceof FileParserError) {
         setError(err.message);
@@ -73,6 +73,26 @@ function App() {
       setIsLoading(false);
     }
   };
+
+  const handleCategoryChange = (
+    id: string,
+    category: string,
+    subcategory?: string
+  ) => {
+    setTransactions((prev) =>
+      prev.map((t) =>
+        t.id === id
+          ? {
+              ...t,
+              category,
+              ...(subcategory !== undefined ? { subcategory } : {}),
+              isManuallyEdited: true,
+            }
+          : t
+      )
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-primary-600 text-white shadow-lg">
@@ -105,13 +125,19 @@ function App() {
             )}
 
             {transactions.length > 0 && (
-              <div className="mt-6 rounded-lg bg-white p-6 shadow">
-                <h3 className="text-lg font-semibold text-gray-800">
-                  Loaded {transactions.length} transactions
-                </h3>
-                <p className="text-sm text-gray-500">
-                  From: {parsedFile?.fileName}
-                </p>
+              <div className="mt-6">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    {transactions.length} Transactions
+                  </h3>
+                  <span className="text-sm text-gray-500">
+                    From: {parsedFile?.fileName}
+                  </span>
+                </div>
+                <TransactionTable
+                  transactions={transactions}
+                  onCategoryChange={handleCategoryChange}
+                />
               </div>
             )}
         </div>
