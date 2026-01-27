@@ -1,4 +1,98 @@
+import { useState } from 'react';
+import { FileUpload } from '@/components/FileUpload';
+import { TransactionTable } from '@/components/TransactionTable';
+import { parseFile, FileParserError } from '@/utils/fileParser';
+import type { ParsedFile, Transaction } from '@/types';
+
 function App() {
+  const [parsedFile, setParsedFile] = useState<ParsedFile | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleFileUpload = async (file: File) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const parsed = await parseFile(file);
+      setParsedFile(parsed);
+
+      // Convert parsed data to Transaction objects
+      const newTransactions: Transaction[] = parsed.data.map((row, index) => {
+        const { detectedColumns } = parsed;
+        
+        // Helper to safely convert cell value to string
+        const cellToString = (value: unknown): string => {
+          if (value === null || value === undefined) return '';
+          if (typeof value === 'string') return value;
+          if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+          return '';
+        };
+
+        // Extract amount (handle debit/credit columns if no amount column)
+        let amount = 0;
+        if (detectedColumns.amount) {
+          amount = parseFloat(cellToString(row[detectedColumns.amount])) || 0;
+        } else if (detectedColumns.debit || detectedColumns.credit) {
+          const debit = parseFloat(cellToString(row[detectedColumns.debit ?? ''])) || 0;
+          const credit = parseFloat(cellToString(row[detectedColumns.credit ?? ''])) || 0;
+          amount = credit - debit;
+        }
+
+        // Parse date
+        const dateStr = detectedColumns.date ? cellToString(row[detectedColumns.date]) : '';
+        const date = new Date(dateStr);
+
+        return {
+          id: `${file.name}-${String(index)}`,
+          date: isNaN(date.getTime()) ? new Date() : date,
+          description: detectedColumns.description
+            ? cellToString(row[detectedColumns.description])
+            : '',
+          amount,
+          isManuallyEdited: false,
+          metadata: {
+            source: 'upload' as const,
+            fileName: file.name,
+            rowIndex: index,
+            rawData: row,
+          },
+        };
+      });
+
+      setTransactions(newTransactions);
+    } catch (err) {
+      if (err instanceof FileParserError) {
+        setError(err.message);
+      } else {
+        setError('An unexpected error occurred while parsing the file');
+      }
+      console.error('File parsing error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCategoryChange = (
+    id: string,
+    category: string,
+    subcategory?: string
+  ) => {
+    setTransactions((prev) =>
+      prev.map((t) =>
+        t.id === id
+          ? {
+              ...t,
+              category,
+              ...(subcategory !== undefined ? { subcategory } : {}),
+              isManuallyEdited: true,
+            }
+          : t
+      )
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-primary-600 text-white shadow-lg">
@@ -18,6 +112,34 @@ function App() {
             Upload your bank statements to automatically categorize expenses
             using machine learning.
           </p>
+            <FileUpload onFileUpload={(file) => void handleFileUpload(file)} />
+            {error && (
+              <div className="mt-4 rounded-md bg-red-50 p-4 text-red-700">
+                {error}
+              </div>
+            )}
+            {isLoading && (
+              <div className="mt-4 text-center text-gray-600">
+                Processing file...
+              </div>
+            )}
+
+            {transactions.length > 0 && (
+              <div className="mt-6">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    {transactions.length} Transactions
+                  </h3>
+                  <span className="text-sm text-gray-500">
+                    From: {parsedFile?.fileName}
+                  </span>
+                </div>
+                <TransactionTable
+                  transactions={transactions}
+                  onCategoryChange={handleCategoryChange}
+                />
+              </div>
+            )}
         </div>
       </main>
     </div>
