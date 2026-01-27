@@ -21,25 +21,33 @@ function App() {
       const newTransactions: Transaction[] = parsed.data.map((row, index) => {
         const { detectedColumns } = parsed;
         
+        // Helper to safely convert cell value to string
+        const cellToString = (value: unknown): string => {
+          if (value === null || value === undefined) return '';
+          if (typeof value === 'string') return value;
+          if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+          return '';
+        };
+
         // Extract amount (handle debit/credit columns if no amount column)
         let amount = 0;
         if (detectedColumns.amount) {
-          amount = parseFloat(String(row[detectedColumns.amount] || 0));
+          amount = parseFloat(cellToString(row[detectedColumns.amount])) || 0;
         } else if (detectedColumns.debit || detectedColumns.credit) {
-          const debit = parseFloat(String(row[detectedColumns.debit ?? ''] || 0));
-          const credit = parseFloat(String(row[detectedColumns.credit ?? ''] || 0));
+          const debit = parseFloat(cellToString(row[detectedColumns.debit ?? ''])) || 0;
+          const credit = parseFloat(cellToString(row[detectedColumns.credit ?? ''])) || 0;
           amount = credit - debit;
         }
 
         // Parse date
-        const dateStr = detectedColumns.date ? String(row[detectedColumns.date] || '') : '';
+        const dateStr = detectedColumns.date ? cellToString(row[detectedColumns.date]) : '';
         const date = new Date(dateStr);
 
         return {
-          id: `${file.name}-${index}`,
+          id: `${file.name}-${String(index)}`,
           date: isNaN(date.getTime()) ? new Date() : date,
-          description: detectedColumns.description 
-            ? String(row[detectedColumns.description] || '') 
+          description: detectedColumns.description
+            ? cellToString(row[detectedColumns.description])
             : '',
           amount,
           isManuallyEdited: false,
@@ -53,7 +61,7 @@ function App() {
       });
 
       setTransactions(newTransactions);
-      console.log(`Parsed ${newTransactions.length} transactions`);
+      console.log(`Parsed ${String(newTransactions.length)} transactions`);
     } catch (err) {
       if (err instanceof FileParserError) {
         setError(err.message);
@@ -84,7 +92,7 @@ function App() {
             Upload your bank statements to automatically categorize expenses
             using machine learning.
           </p>
-            <FileUpload onFileUpload={handleFileUpload} />
+            <FileUpload onFileUpload={(file) => void handleFileUpload(file)} />
             {error && (
               <div className="mt-4 rounded-md bg-red-50 p-4 text-red-700">
                 {error}
