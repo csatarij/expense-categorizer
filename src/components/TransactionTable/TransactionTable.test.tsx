@@ -26,7 +26,7 @@ function getCategorySelect(index = 0): HTMLElement {
   const comboboxes = screen.getAllByRole('combobox');
   const element = comboboxes[index * 2];
   if (!element) {
-    throw new Error(`Category select at index ${index} not found`);
+    throw new Error(`Category select at index ${String(index)} not found`);
   }
   return element;
 }
@@ -38,7 +38,7 @@ function getSubcategorySelect(index = 0): HTMLElement {
   const comboboxes = screen.getAllByRole('combobox');
   const element = comboboxes[index * 2 + 1];
   if (!element) {
-    throw new Error(`Subcategory select at index ${index} not found`);
+    throw new Error(`Subcategory select at index ${String(index)} not found`);
   }
   return element;
 }
