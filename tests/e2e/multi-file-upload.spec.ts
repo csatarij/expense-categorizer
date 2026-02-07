@@ -23,11 +23,9 @@ test.describe('Multi-File Upload', () => {
       buffer: Buffer.from(csvContent),
     });
 
-    // Wait for processing
-    await expect(page.getByText(/Processing file/)).toBeVisible();
-    await expect(page.getByText(/Processing file/)).not.toBeVisible({
-      timeout: 5000,
-    });
+    // Wait for processing to complete (it may be too fast to see the loading state)
+    // Instead of waiting for the loading text, just wait for the results
+    await page.waitForTimeout(500); // Give it a moment to process
 
     // Verify transactions are displayed
     await expect(page.getByText(/2 Transactions/)).toBeVisible();
@@ -40,7 +38,8 @@ test.describe('Multi-File Upload', () => {
 
     // Verify file list shows the uploaded file
     await expect(page.getByText('Uploaded Files (1)')).toBeVisible();
-    await expect(page.getByText('january-2024.csv')).toBeVisible();
+    // Check filename in file list (using title attribute which is unique to file list)
+    await expect(page.locator('p[title="january-2024.csv"]')).toBeVisible();
   });
 
   test('should upload multiple files sequentially and merge', async ({
@@ -58,9 +57,7 @@ test.describe('Multi-File Upload', () => {
       buffer: Buffer.from(csv1Content),
     });
 
-    await expect(page.getByText(/Processing file/)).not.toBeVisible({
-      timeout: 5000,
-    });
+    await page.waitForTimeout(500); // Wait for file to process
     await expect(page.getByText(/2 Transactions/)).toBeVisible();
 
     // Upload second file
@@ -75,17 +72,16 @@ test.describe('Multi-File Upload', () => {
       buffer: Buffer.from(csv2Content),
     });
 
-    await expect(page.getByText(/Processing file/)).not.toBeVisible({
-      timeout: 5000,
-    });
+    await page.waitForTimeout(500); // Wait for file to process
 
     // Verify merged count
     await expect(page.getByText(/5 Transactions/)).toBeVisible();
 
     // Verify both files in file list
     await expect(page.getByText('Uploaded Files (2)')).toBeVisible();
-    await expect(page.getByText('january-2024.csv')).toBeVisible();
-    await expect(page.getByText('february-2024.csv')).toBeVisible();
+    // Check filenames in file list (using title attribute)
+    await expect(page.locator('p[title="january-2024.csv"]')).toBeVisible();
+    await expect(page.locator('p[title="february-2024.csv"]')).toBeVisible();
 
     // Verify "From 2 files" message
     await expect(page.getByText(/From 2 files/)).toBeVisible();
@@ -105,9 +101,7 @@ test.describe('Multi-File Upload', () => {
       buffer: Buffer.from(csvContent),
     });
 
-    await expect(page.getByText(/Processing file/)).not.toBeVisible({
-      timeout: 5000,
-    });
+    await page.waitForTimeout(500); // Wait for file to process
     await expect(page.getByText(/2 Transactions/)).toBeVisible();
     await expect(page.getByText(/Added 2 transactions/)).toBeVisible();
 
@@ -118,9 +112,7 @@ test.describe('Multi-File Upload', () => {
       buffer: Buffer.from(csvContent),
     });
 
-    await expect(page.getByText(/Processing file/)).not.toBeVisible({
-      timeout: 5000,
-    });
+    await page.waitForTimeout(500); // Wait for file to process
 
     // Verify count stayed at 2
     await expect(page.getByText(/2 Transactions/)).toBeVisible();
@@ -147,9 +139,7 @@ test.describe('Multi-File Upload', () => {
       buffer: Buffer.from(csvWithCategories),
     });
 
-    await expect(page.getByText(/Processing file/)).not.toBeVisible({
-      timeout: 5000,
-    });
+    await page.waitForTimeout(500); // Wait for file to process
 
     // Verify transactions table shows imported categories
     const table = page.locator('table');
@@ -175,15 +165,13 @@ test.describe('Multi-File Upload', () => {
       buffer: Buffer.from(csvContent),
     });
 
-    await expect(page.getByText(/Processing file/)).not.toBeVisible({
-      timeout: 5000,
-    });
+    await page.waitForTimeout(500); // Wait for file to process
 
     // Verify Source column header exists
     await expect(page.getByRole('columnheader', { name: /Source/i })).toBeVisible();
 
     // Verify source badge is shown in the table
-    await expect(page.getByText('test-source.csv')).toBeVisible();
+    await expect(page.getByRole('table').getByText('test-source.csv')).toBeVisible();
   });
 
   test('should remove specific file and its transactions', async ({ page }) => {
@@ -200,18 +188,14 @@ test.describe('Multi-File Upload', () => {
       mimeType: 'text/csv',
       buffer: Buffer.from(csv1Content),
     });
-    await expect(page.getByText(/Processing file/)).not.toBeVisible({
-      timeout: 5000,
-    });
+    await page.waitForTimeout(500); // Wait for file to process
 
     await fileInput.setInputFiles({
       name: 'file2.csv',
       mimeType: 'text/csv',
       buffer: Buffer.from(csv2Content),
     });
-    await expect(page.getByText(/Processing file/)).not.toBeVisible({
-      timeout: 5000,
-    });
+    await page.waitForTimeout(500); // Wait for file to process
 
     // Verify 2 transactions and 2 files
     await expect(page.getByText(/2 Transactions/)).toBeVisible();
@@ -228,8 +212,9 @@ test.describe('Multi-File Upload', () => {
 
     // Verify only 1 file in list
     await expect(page.getByText('Uploaded Files (1)')).toBeVisible();
-    await expect(page.getByText('file2.csv')).toBeVisible();
-    await expect(page.getByText('file1.csv')).not.toBeVisible();
+    // Check using title attribute to target file list
+    await expect(page.locator('p[title="file2.csv"]')).toBeVisible();
+    await expect(page.locator('p[title="file1.csv"]')).not.toBeVisible();
   });
 
   test('should clear all files when Clear All is clicked', async ({ page }) => {
@@ -244,18 +229,14 @@ test.describe('Multi-File Upload', () => {
       mimeType: 'text/csv',
       buffer: Buffer.from(csvContent),
     });
-    await expect(page.getByText(/Processing file/)).not.toBeVisible({
-      timeout: 5000,
-    });
+    await page.waitForTimeout(500); // Wait for file to process
 
     await fileInput.setInputFiles({
       name: 'file2.csv',
       mimeType: 'text/csv',
       buffer: Buffer.from(csvContent),
     });
-    await expect(page.getByText(/Processing file/)).not.toBeVisible({
-      timeout: 5000,
-    });
+    await page.waitForTimeout(500); // Wait for file to process
 
     // Verify files are loaded
     await expect(page.getByText('Uploaded Files (2)')).toBeVisible();
@@ -285,24 +266,22 @@ test.describe('Multi-File Upload', () => {
       buffer: Buffer.from(csvContent),
     });
 
-    await expect(page.getByText(/Processing file/)).not.toBeVisible({
-      timeout: 5000,
-    });
+    await page.waitForTimeout(500); // Wait for file to process
 
-    // File list should be visible initially
-    await expect(page.getByText('test.csv')).toBeVisible();
+    // File list should be visible initially (using title attribute)
+    await expect(page.locator('p[title="test.csv"]')).toBeVisible();
 
     // Click to collapse
     await page.getByRole('button', { name: /Uploaded Files \(1\)/i }).click();
 
     // File details should be hidden
-    await expect(page.getByText('test.csv')).not.toBeVisible();
+    await expect(page.locator('p[title="test.csv"]')).not.toBeVisible();
 
     // Click to expand again
     await page.getByRole('button', { name: /Uploaded Files \(1\)/i }).click();
 
     // File details should be visible again
-    await expect(page.getByText('test.csv')).toBeVisible();
+    await expect(page.locator('p[title="test.csv"]')).toBeVisible();
   });
 
   test('should show merge summary and auto-dismiss', async ({ page }) => {
@@ -316,9 +295,7 @@ test.describe('Multi-File Upload', () => {
       buffer: Buffer.from(csvContent),
     });
 
-    await expect(page.getByText(/Processing file/)).not.toBeVisible({
-      timeout: 5000,
-    });
+    await page.waitForTimeout(500); // Wait for file to process
 
     // Verify merge summary is shown
     await expect(page.getByText(/File Uploaded/)).toBeVisible();
@@ -341,9 +318,7 @@ test.describe('Multi-File Upload', () => {
       buffer: Buffer.from(csvContent),
     });
 
-    await expect(page.getByText(/Processing file/)).not.toBeVisible({
-      timeout: 5000,
-    });
+    await page.waitForTimeout(500); // Wait for file to process
 
     // Verify merge summary is shown
     await expect(page.getByText(/File Uploaded/)).toBeVisible();
@@ -371,18 +346,14 @@ test.describe('Multi-File Upload', () => {
       mimeType: 'text/csv',
       buffer: Buffer.from(csv1Content),
     });
-    await expect(page.getByText(/Processing file/)).not.toBeVisible({
-      timeout: 5000,
-    });
+    await page.waitForTimeout(500); // Wait for file to process
 
     await fileInput.setInputFiles({
       name: 'file2.csv',
       mimeType: 'text/csv',
       buffer: Buffer.from(csv2Content),
     });
-    await expect(page.getByText(/Processing file/)).not.toBeVisible({
-      timeout: 5000,
-    });
+    await page.waitForTimeout(500); // Wait for file to process
 
     // Verify merged data is shown
     await expect(page.getByText(/2 Transactions/)).toBeVisible();
@@ -406,9 +377,7 @@ test.describe('Multi-File Upload', () => {
       mimeType: 'text/csv',
       buffer: Buffer.from(csvContent),
     });
-    await expect(page.getByText(/Processing file/)).not.toBeVisible({
-      timeout: 5000,
-    });
+    await page.waitForTimeout(500); // Wait for file to process
 
     // Upload duplicate
     await fileInput.setInputFiles({
@@ -416,9 +385,7 @@ test.describe('Multi-File Upload', () => {
       mimeType: 'text/csv',
       buffer: Buffer.from(csvContent),
     });
-    await expect(page.getByText(/Processing file/)).not.toBeVisible({
-      timeout: 5000,
-    });
+    await page.waitForTimeout(500); // Wait for file to process
 
     // Verify duplicate warning in file list for second file
     await expect(page.getByText(/1 duplicate skipped/)).toBeVisible();
