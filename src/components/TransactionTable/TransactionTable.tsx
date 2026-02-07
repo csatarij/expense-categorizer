@@ -13,11 +13,16 @@ export function TransactionTable({
 }: TransactionTableProps): React.JSX.Element {
   const categories = getCategoryNames();
 
-  const formatAmount = (amount: number): string => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(Math.abs(amount));
+  const formatAmount = (amount: number, currency: string): string => {
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currency || 'USD',
+      }).format(Math.abs(amount));
+    } catch {
+      // Fallback if currency code is invalid
+      return `${Math.abs(amount).toFixed(2)} ${currency}`;
+    }
   };
 
   const formatDate = (date: Date): string => {
@@ -93,7 +98,7 @@ export function TransactionTable({
                 }`}
               >
                 {transaction.amount < 0 ? '-' : '+'}
-                {formatAmount(transaction.amount)}
+                {formatAmount(transaction.amount, transaction.currency)}
               </td>
               <td className="whitespace-nowrap px-4 py-3 text-sm">
                 <select

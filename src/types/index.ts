@@ -28,6 +28,7 @@ export interface Transaction {
   date: Date;
   description: string;
   amount: number;
+  currency: string;
   category?: string;
   subcategory?: string;
   originalCategory?: string;
@@ -59,6 +60,7 @@ export interface ColumnMapping {
   date?: string;
   description?: string;
   amount?: string;
+  currency?: string;
   category?: string;
   subcategory?: string;
   debit?: string;

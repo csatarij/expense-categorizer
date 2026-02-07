@@ -276,6 +276,15 @@ describe('fileParser', () => {
       expect(result.detectedColumns.credit).toBe('Credit');
     });
 
+    it('should detect currency column', async () => {
+      const csvContent =
+        'Date,Description,Amount,Currency\n2024-01-01,Test,50.00,USD';
+      const file = createMockFile(csvContent, 'test.csv');
+      const result = await parseFile(file);
+
+      expect(result.detectedColumns.currency).toBe('Currency');
+    });
+
     it('should respect custom max file size option', async () => {
       const content = 'x'.repeat(100);
       const file = createMockFile(content, 'test.csv');
