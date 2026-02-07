@@ -95,7 +95,7 @@ describe('FileUpload', () => {
       render(<FileUpload onFileUpload={onFileUpload} />);
 
       expect(screen.getByTestId('drop-zone')).toBeInTheDocument();
-      expect(screen.getByText(/drag & drop your file here/i)).toBeInTheDocument();
+      expect(screen.getByText(/drag & drop your files here/i)).toBeInTheDocument();
     });
 
     it('should display accepted formats', () => {
@@ -189,7 +189,7 @@ describe('FileUpload', () => {
         dataTransfer: createDataTransfer([createMockFile('test.csv', 100)]),
       });
 
-      expect(screen.getByText(/drop your file here/i)).toBeInTheDocument();
+      expect(screen.getByText(/drop your files here/i)).toBeInTheDocument();
     });
 
     it('should trigger onFileUpload on drop', async () => {
@@ -455,12 +455,12 @@ describe('FileUpload', () => {
       expect(fileInput).toHaveAttribute('multiple');
     });
 
-    it('should not allow multiple files by default', () => {
+    it('should allow multiple files by default', () => {
       const onFileUpload = vi.fn();
       render(<FileUpload onFileUpload={onFileUpload} />);
 
       const fileInput = screen.getByTestId('file-input');
-      expect(fileInput).not.toHaveAttribute('multiple');
+      expect(fileInput).toHaveAttribute('multiple');
     });
 
     it('should call onFileUpload for each file when multiple', async () => {

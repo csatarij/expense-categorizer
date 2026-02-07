@@ -156,3 +156,61 @@ export function mergeTransactions(
 
   return merged;
 }
+
+/**
+ * Result of merging transactions with detailed metadata
+ */
+export interface MergeResult {
+  /** All transactions after merge (existing + newly added) */
+  merged: Transaction[];
+  /** Transactions that were identified as duplicates and skipped */
+  duplicates: Transaction[];
+  /** Transactions that were newly added (not duplicates) */
+  added: Transaction[];
+}
+
+/**
+ * Merges new transactions with existing ones, returning detailed metadata
+ * about the merge operation. This is useful for providing user feedback
+ * about duplicate detection and newly added transactions.
+ *
+ * Duplicate detection uses a composite key of: date + description + amount + currency
+ *
+ * @param existing - Array of existing transactions
+ * @param newTransactions - Array of new transactions to merge
+ * @returns MergeResult containing merged array, duplicates, and added transactions
+ *
+ * @example
+ * const result = mergeTransactionsWithMetadata(existingTxns, newTxns);
+ * console.log(`Added ${result.added.length} transactions`);
+ * console.log(`Skipped ${result.duplicates.length} duplicates`);
+ */
+export function mergeTransactionsWithMetadata(
+  existing: Transaction[],
+  newTransactions: Transaction[]
+): MergeResult {
+  const existingMap = new Map<string, Transaction>();
+  const duplicates: Transaction[] = [];
+  const added: Transaction[] = [];
+
+  // Build map of existing transactions
+  existing.forEach((t) => {
+    const key = `${t.date.toISOString()}-${t.description}-${String(t.amount)}-${t.currency}`;
+    existingMap.set(key, t);
+  });
+
+  const merged = [...existing];
+
+  // Check each new transaction for duplicates
+  newTransactions.forEach((t) => {
+    const key = `${t.date.toISOString()}-${t.description}-${String(t.amount)}-${t.currency}`;
+    if (existingMap.has(key)) {
+      duplicates.push(t);
+    } else {
+      merged.push(t);
+      added.push(t);
+    }
+  });
+
+  return { merged, duplicates, added };
+}
