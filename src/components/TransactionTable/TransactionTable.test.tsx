@@ -14,6 +14,7 @@ function createMockTransaction(overrides: Partial<Transaction> = {}): Transactio
     date: new Date('2024-01-15'),
     description: 'Test Transaction',
     amount: -50.0,
+    currency: 'USD',
     isManuallyEdited: false,
     ...overrides,
   };

@@ -47,3 +47,9 @@ npm run type-check    # TypeScript checking
 - Follow strict TypeScript mode
 - Tailwind CSS for all styling
 - Components should have corresponding `.test.tsx` files
+
+## Quality Standards
+
+- **Pre-commit Checks**: All commits MUST pass linting before being committed. Run `npm run lint` to verify code quality.
+- **Code Coverage**: Test coverage must be maintained at or above 80% per file. The CI/CD pipeline will fail if coverage drops below this threshold. Run `npm run test:coverage` to verify coverage locally.
+  - **Known Issue**: The vitest/v8 coverage reporter shows duplicate file entries on Windows, which affects aggregate coverage calculations. Individual file coverage (non-zero entries) should be above 80% for statements, lines, and functions. Branch coverage target is 70% due to this reporting issue.

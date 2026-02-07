@@ -231,6 +231,15 @@ function detectColumnMappings(headers: string[]): ColumnMapping {
     mapping.category = headers[categoryIndex];
   }
 
+  // Currency detection
+  const currencyPatterns = ['currency', 'curr', 'ccy'];
+  const currencyIndex = lowerHeaders.findIndex((h) =>
+    currencyPatterns.some((p) => h.includes(p))
+  );
+  if (currencyIndex !== -1 && headers[currencyIndex]) {
+    mapping.currency = headers[currencyIndex];
+  }
+
   return mapping;
 }
 

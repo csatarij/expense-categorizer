@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { FileUpload } from '@/components/FileUpload';
 import { TransactionTable } from '@/components/TransactionTable';
+import { DownloadButton } from '@/components/DownloadButton';
 import { parseFile, FileParserError } from '@/utils/fileParser';
 import type { ParsedFile, Transaction } from '@/types';
 
@@ -21,7 +22,7 @@ function App() {
       // Convert parsed data to Transaction objects
       const newTransactions: Transaction[] = parsed.data.map((row, index) => {
         const { detectedColumns } = parsed;
-        
+
         // Helper to safely convert cell value to string
         const cellToString = (value: unknown): string => {
           if (value === null || value === undefined) return '';
@@ -40,6 +41,11 @@ function App() {
           amount = credit - debit;
         }
 
+        // Extract currency (default to USD if not found)
+        const currency = detectedColumns.currency
+          ? cellToString(row[detectedColumns.currency]).toUpperCase() || 'USD'
+          : 'USD';
+
         // Parse date
         const dateStr = detectedColumns.date ? cellToString(row[detectedColumns.date]) : '';
         const date = new Date(dateStr);
@@ -51,6 +57,7 @@ function App() {
             ? cellToString(row[detectedColumns.description])
             : '',
           amount,
+          currency,
           isManuallyEdited: false,
           metadata: {
             source: 'upload' as const,
@@ -127,12 +134,15 @@ function App() {
             {transactions.length > 0 && (
               <div className="mt-6">
                 <div className="mb-4 flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-800">
-                    {transactions.length} Transactions
-                  </h3>
-                  <span className="text-sm text-gray-500">
-                    From: {parsedFile?.fileName}
-                  </span>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      {transactions.length} Transactions
+                    </h3>
+                    <span className="text-sm text-gray-500">
+                      From: {parsedFile?.fileName}
+                    </span>
+                  </div>
+                  <DownloadButton transactions={transactions} />
                 </div>
                 <TransactionTable
                   transactions={transactions}
