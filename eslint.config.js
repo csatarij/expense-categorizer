@@ -32,5 +32,11 @@ export default tseslint.config(
         { argsIgnorePattern: '^_' },
       ],
     },
+  },
+  {
+    files: ['**/*.test.{ts,tsx}'],
+    rules: {
+      '@typescript-eslint/unbound-method': 'off',
+    },
   }
 );

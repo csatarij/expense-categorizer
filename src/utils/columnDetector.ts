@@ -15,6 +15,7 @@ export const COLUMN_PATTERNS: Record<keyof ColumnMapping, string[]> = {
   date: ['date', 'transaction date', 'posted date', 'trans date', 'txn date', 'posting date'],
   description: ['description', 'merchant', 'name', 'details', 'memo', 'payee', 'narrative'],
   amount: ['amount', 'transaction amount', 'value', 'total', 'sum'],
+  currency: ['currency', 'curr', 'ccy', 'currency code'],
   debit: ['debit', 'withdrawal', 'charge', 'debit amount', 'money out'],
   credit: ['credit', 'deposit', 'credit amount', 'money in'],
   category: ['category', 'type', 'class', 'classification', 'expense type'],
