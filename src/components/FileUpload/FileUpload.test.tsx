@@ -476,7 +476,8 @@ describe('FileUpload', () => {
       uploadFile(fileInput, files);
 
       await waitFor(() => {
-        expect(onFileUpload).toHaveBeenCalledTimes(2);
+        expect(onFileUpload).toHaveBeenCalledTimes(1);
+        expect(onFileUpload).toHaveBeenCalledWith(files);
       });
     });
   });
@@ -495,7 +496,7 @@ describe('FileUpload', () => {
         expect(screen.getByText('data.csv')).toBeInTheDocument();
       });
 
-      const clearButton = screen.getByText(/choose a different file/i);
+      const clearButton = screen.getByText(/choose different file/i);
       fireEvent.click(clearButton);
 
       expect(screen.queryByText('data.csv')).not.toBeInTheDocument();

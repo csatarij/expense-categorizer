@@ -11,64 +11,79 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleFileUpload = async (file: File) => {
+  const handleFileUpload = async (files: File | File[]) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const parsed = await parseFile(file);
-      setParsedFile(parsed);
+      const fileArray = Array.isArray(files) ? files : [files];
+      const allTransactions: Transaction[] = [];
 
-      // Convert parsed data to Transaction objects
-      const newTransactions: Transaction[] = parsed.data.map((row, index) => {
-        const { detectedColumns } = parsed;
+      // Process each file
+      for (const file of fileArray) {
+        const parsed = await parseFile(file);
 
-        // Helper to safely convert cell value to string
-        const cellToString = (value: unknown): string => {
-          if (value === null || value === undefined) return '';
-          if (typeof value === 'string') return value;
-          if (typeof value === 'number' || typeof value === 'boolean') return String(value);
-          return '';
-        };
+        // Convert parsed data to Transaction objects
+        const fileTransactions: Transaction[] = parsed.data.map((row, index) => {
+          const { detectedColumns } = parsed;
 
-        // Extract amount (handle debit/credit columns if no amount column)
-        let amount = 0;
-        if (detectedColumns.amount) {
-          amount = parseFloat(cellToString(row[detectedColumns.amount])) || 0;
-        } else if (detectedColumns.debit || detectedColumns.credit) {
-          const debit = parseFloat(cellToString(row[detectedColumns.debit ?? ''])) || 0;
-          const credit = parseFloat(cellToString(row[detectedColumns.credit ?? ''])) || 0;
-          amount = credit - debit;
-        }
+          // Helper to safely convert cell value to string
+          const cellToString = (value: unknown): string => {
+            if (value === null || value === undefined) return '';
+            if (typeof value === 'string') return value;
+            if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+            return '';
+          };
 
-        // Extract currency (default to USD if not found)
-        const currency = detectedColumns.currency
-          ? cellToString(row[detectedColumns.currency]).toUpperCase() || 'USD'
-          : 'USD';
+          // Extract amount (handle debit/credit columns if no amount column)
+          let amount = 0;
+          if (detectedColumns.amount) {
+            amount = parseFloat(cellToString(row[detectedColumns.amount])) || 0;
+          } else if (detectedColumns.debit || detectedColumns.credit) {
+            const debit = parseFloat(cellToString(row[detectedColumns.debit ?? ''])) || 0;
+            const credit = parseFloat(cellToString(row[detectedColumns.credit ?? ''])) || 0;
+            amount = credit - debit;
+          }
 
-        // Parse date
-        const dateStr = detectedColumns.date ? cellToString(row[detectedColumns.date]) : '';
-        const date = new Date(dateStr);
+          // Extract currency (default to USD if not found)
+          const currency = detectedColumns.currency
+            ? cellToString(row[detectedColumns.currency]).toUpperCase() || 'USD'
+            : 'USD';
 
-        return {
-          id: `${file.name}-${String(index)}`,
-          date: isNaN(date.getTime()) ? new Date() : date,
-          description: detectedColumns.description
-            ? cellToString(row[detectedColumns.description])
-            : '',
-          amount,
-          currency,
-          isManuallyEdited: false,
-          metadata: {
-            source: 'upload' as const,
-            fileName: file.name,
-            rowIndex: index,
-            rawData: row,
-          },
-        };
-      });
+          // Parse date
+          const dateStr = detectedColumns.date ? cellToString(row[detectedColumns.date]) : '';
+          const date = new Date(dateStr);
 
-      setTransactions(newTransactions);
+          return {
+            id: `${file.name}-${String(index)}`,
+            date: isNaN(date.getTime()) ? new Date() : date,
+            description: detectedColumns.description
+              ? cellToString(row[detectedColumns.description])
+              : '',
+            amount,
+            currency,
+            isManuallyEdited: false,
+            metadata: {
+              source: 'upload' as const,
+              fileName: file.name,
+              rowIndex: index,
+              rawData: row,
+            },
+          };
+        });
+
+        allTransactions.push(...fileTransactions);
+      }
+
+      // Set the last parsed file info (for display purposes)
+      if (fileArray.length === 1 && fileArray[0]) {
+        const parsed = await parseFile(fileArray[0]);
+        setParsedFile(parsed);
+      } else {
+        setParsedFile(null);
+      }
+
+      setTransactions(allTransactions);
     } catch (err) {
       if (err instanceof FileParserError) {
         setError(err.message);
@@ -119,7 +134,10 @@ function App() {
             Upload your bank statements to automatically categorize expenses
             using machine learning.
           </p>
-            <FileUpload onFileUpload={(file) => void handleFileUpload(file)} />
+            <FileUpload
+              onFileUpload={(files) => void handleFileUpload(files)}
+              multiple={true}
+            />
             {error && (
               <div className="mt-4 rounded-md bg-red-50 p-4 text-red-700">
                 {error}
@@ -127,7 +145,7 @@ function App() {
             )}
             {isLoading && (
               <div className="mt-4 text-center text-gray-600">
-                Processing file...
+                Processing files...
               </div>
             )}
 
@@ -138,9 +156,11 @@ function App() {
                     <h3 className="text-lg font-semibold text-gray-800">
                       {transactions.length} Transactions
                     </h3>
-                    <span className="text-sm text-gray-500">
-                      From: {parsedFile?.fileName}
-                    </span>
+                    {parsedFile && (
+                      <span className="text-sm text-gray-500">
+                        From: {parsedFile.fileName}
+                      </span>
+                    )}
                   </div>
                   <DownloadButton transactions={transactions} />
                 </div>

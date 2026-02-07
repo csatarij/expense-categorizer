@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 
 export interface FileUploadProps {
-  onFileUpload: (file: File) => void;
+  onFileUpload: (file: File | File[]) => void;
   acceptedFormats?: string[];
   maxFileSize?: number;
   multiple?: boolean;
@@ -47,7 +47,7 @@ export function FileUpload({
   multiple = false,
 }: FileUploadProps): React.JSX.Element {
   const [isDragging, setIsDragging] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | File[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -76,24 +76,32 @@ export function FileUpload({
     [acceptedFormats, maxFileSize]
   );
 
-  const handleFile = useCallback(
-    (file: File) => {
+  const handleFiles = useCallback(
+    (files: File | File[]) => {
       setError(null);
 
-      const validationError = validateFile(file);
-      if (validationError) {
-        setError(validationError);
-        setSelectedFile(null);
-        return;
+      const fileArray = Array.isArray(files) ? files : [files];
+      const validFiles: File[] = [];
+
+      // Validate all files
+      for (const file of fileArray) {
+        const validationError = validateFile(file);
+        if (validationError) {
+          setError(validationError);
+          setSelectedFile(null);
+          return;
+        }
+        validFiles.push(file);
       }
 
-      setSelectedFile(file);
+      const result = validFiles.length === 1 && validFiles[0] ? validFiles[0] : validFiles;
+      setSelectedFile(result);
       setIsProcessing(true);
 
       // Simulate brief processing delay for UX
       setTimeout(() => {
         setIsProcessing(false);
-        onFileUpload(file);
+        onFileUpload(result);
       }, 100);
     },
     [validateFile, onFileUpload]
@@ -125,16 +133,16 @@ export function FileUpload({
       const files = e.dataTransfer.files;
       if (files.length > 0) {
         if (multiple) {
-          Array.from(files).forEach(handleFile);
+          handleFiles(Array.from(files));
         } else {
           const file = files[0];
           if (file) {
-            handleFile(file);
+            handleFiles(file);
           }
         }
       }
     },
-    [handleFile, multiple]
+    [handleFiles, multiple]
   );
 
   const handleClick = useCallback(() => {
@@ -156,18 +164,18 @@ export function FileUpload({
       const files = e.target.files;
       if (files && files.length > 0) {
         if (multiple) {
-          Array.from(files).forEach(handleFile);
+          handleFiles(Array.from(files));
         } else {
           const file = files[0];
           if (file) {
-            handleFile(file);
+            handleFiles(file);
           }
         }
       }
       // Reset input so the same file can be selected again
       e.target.value = '';
     },
-    [handleFile, multiple]
+    [handleFiles, multiple]
   );
 
   const handleClearFile = useCallback(() => {
@@ -226,15 +234,33 @@ export function FileUpload({
           </div>
         ) : selectedFile ? (
           <div className="flex flex-col items-center gap-3">
-            <span className="text-4xl" role="img" aria-label="File icon">
-              {getFileIcon(selectedFile.name)}
-            </span>
-            <div className="text-center">
-              <p className="font-medium text-gray-900">{selectedFile.name}</p>
-              <p className="text-sm text-gray-500">
-                {formatFileSize(selectedFile.size)}
-              </p>
-            </div>
+            {Array.isArray(selectedFile) ? (
+              <>
+                <span className="text-4xl" role="img" aria-label="Multiple files icon">
+                  📚
+                </span>
+                <div className="text-center">
+                  <p className="font-medium text-gray-900">
+                    {selectedFile.length} files selected
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {formatFileSize(selectedFile.reduce((sum, f) => sum + f.size, 0))}
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <span className="text-4xl" role="img" aria-label="File icon">
+                  {getFileIcon(selectedFile.name)}
+                </span>
+                <div className="text-center">
+                  <p className="font-medium text-gray-900">{selectedFile.name}</p>
+                  <p className="text-sm text-gray-500">
+                    {formatFileSize(selectedFile.size)}
+                  </p>
+                </div>
+              </>
+            )}
             <button
               type="button"
               onClick={(e) => {
@@ -244,7 +270,7 @@ export function FileUpload({
               className="text-sm text-blue-600 hover:text-blue-800 underline"
               aria-label="Clear selected file"
             >
-              Choose a different file
+              Choose different {Array.isArray(selectedFile) ? 'files' : 'file'}
             </button>
           </div>
         ) : (
@@ -254,7 +280,9 @@ export function FileUpload({
             </span>
             <div className="text-center">
               <p className="font-medium text-gray-700">
-                {isDragging ? 'Drop your file here' : 'Drag & drop your file here'}
+                {isDragging
+                  ? `Drop your ${multiple ? 'files' : 'file'} here`
+                  : `Drag & drop your ${multiple ? 'files' : 'file'} here`}
               </p>
               <p className="text-sm text-gray-500">
                 or <span className="text-blue-600">click to browse</span>
