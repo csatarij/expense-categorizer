@@ -16,6 +16,7 @@ export type CategorizationMethod =
 export interface TransactionMetadata {
   source: 'upload' | 'statement';
   fileName: string;
+  fileId: string;
   rowIndex: number;
   rawData: Record<string, unknown>;
 }

@@ -44,7 +44,7 @@ export function FileUpload({
   onFileUpload,
   acceptedFormats = DEFAULT_ACCEPTED_FORMATS,
   maxFileSize = DEFAULT_MAX_FILE_SIZE,
-  multiple = false,
+  multiple = true,
 }: FileUploadProps): React.JSX.Element {
   const [isDragging, setIsDragging] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -254,10 +254,13 @@ export function FileUpload({
             </span>
             <div className="text-center">
               <p className="font-medium text-gray-700">
-                {isDragging ? 'Drop your file here' : 'Drag & drop your file here'}
+                {isDragging
+                  ? 'Drop your files here'
+                  : 'Drag & drop your files here'}
               </p>
               <p className="text-sm text-gray-500">
-                or <span className="text-blue-600">click to browse</span>
+                or <span className="text-blue-600">click to browse</span>{' '}
+                {multiple && <span>(multiple files supported)</span>}
               </p>
             </div>
             <p className="text-xs text-gray-400">

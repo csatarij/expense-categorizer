@@ -5,6 +5,7 @@ import {
   exportToXLSX,
   exportTransactions,
   mergeTransactions,
+  mergeTransactionsWithMetadata,
 } from './fileExporter';
 import type { Transaction } from '@/types';
 
@@ -206,6 +207,265 @@ describe('fileExporter', () => {
 
       const merged3 = mergeTransactions([], []);
       expect(merged3).toHaveLength(0);
+    });
+  });
+
+  describe('mergeTransactionsWithMetadata', () => {
+    it('should merge new transactions and return metadata', () => {
+      const existing: Transaction[] = [
+        {
+          id: '1',
+          date: new Date('2024-01-01'),
+          description: 'Old Transaction',
+          amount: -10,
+          currency: 'USD',
+          isManuallyEdited: false,
+        },
+      ];
+
+      const newOnes: Transaction[] = [
+        {
+          id: '2',
+          date: new Date('2024-01-02'),
+          description: 'New Transaction',
+          amount: -20,
+          currency: 'USD',
+          isManuallyEdited: false,
+        },
+      ];
+
+      const result = mergeTransactionsWithMetadata(existing, newOnes);
+
+      expect(result.merged).toHaveLength(2);
+      expect(result.added).toHaveLength(1);
+      expect(result.duplicates).toHaveLength(0);
+      expect(result.added[0]?.description).toBe('New Transaction');
+    });
+
+    it('should identify duplicate transactions', () => {
+      const transaction: Transaction = {
+        id: '1',
+        date: new Date('2024-01-01'),
+        description: 'Same Transaction',
+        amount: -10,
+        currency: 'USD',
+        isManuallyEdited: false,
+      };
+
+      const existing = [transaction];
+      const newOnes = [{ ...transaction, id: '2' }]; // Same data, different ID
+
+      const result = mergeTransactionsWithMetadata(existing, newOnes);
+
+      expect(result.merged).toHaveLength(1);
+      expect(result.added).toHaveLength(0);
+      expect(result.duplicates).toHaveLength(1);
+      expect(result.duplicates[0]?.description).toBe('Same Transaction');
+    });
+
+    it('should handle mixed scenario with both new and duplicate transactions', () => {
+      const existing: Transaction[] = [
+        {
+          id: '1',
+          date: new Date('2024-01-01'),
+          description: 'Existing Transaction',
+          amount: -10,
+          currency: 'USD',
+          isManuallyEdited: false,
+        },
+      ];
+
+      const newOnes: Transaction[] = [
+        // Duplicate
+        {
+          id: '2',
+          date: new Date('2024-01-01'),
+          description: 'Existing Transaction',
+          amount: -10,
+          currency: 'USD',
+          isManuallyEdited: false,
+        },
+        // New transaction 1
+        {
+          id: '3',
+          date: new Date('2024-01-02'),
+          description: 'New Transaction 1',
+          amount: -20,
+          currency: 'USD',
+          isManuallyEdited: false,
+        },
+        // New transaction 2
+        {
+          id: '4',
+          date: new Date('2024-01-03'),
+          description: 'New Transaction 2',
+          amount: -30,
+          currency: 'EUR',
+          isManuallyEdited: false,
+        },
+      ];
+
+      const result = mergeTransactionsWithMetadata(existing, newOnes);
+
+      expect(result.merged).toHaveLength(3); // 1 existing + 2 new
+      expect(result.added).toHaveLength(2);
+      expect(result.duplicates).toHaveLength(1);
+      expect(result.added.map((t) => t.description)).toEqual([
+        'New Transaction 1',
+        'New Transaction 2',
+      ]);
+      expect(result.duplicates[0]?.description).toBe('Existing Transaction');
+    });
+
+    it('should handle empty existing array', () => {
+      const newOnes: Transaction[] = [
+        {
+          id: '1',
+          date: new Date('2024-01-01'),
+          description: 'Transaction',
+          amount: -10,
+          currency: 'USD',
+          isManuallyEdited: false,
+        },
+      ];
+
+      const result = mergeTransactionsWithMetadata([], newOnes);
+
+      expect(result.merged).toHaveLength(1);
+      expect(result.added).toHaveLength(1);
+      expect(result.duplicates).toHaveLength(0);
+    });
+
+    it('should handle empty new transactions array', () => {
+      const existing: Transaction[] = [
+        {
+          id: '1',
+          date: new Date('2024-01-01'),
+          description: 'Transaction',
+          amount: -10,
+          currency: 'USD',
+          isManuallyEdited: false,
+        },
+      ];
+
+      const result = mergeTransactionsWithMetadata(existing, []);
+
+      expect(result.merged).toHaveLength(1);
+      expect(result.added).toHaveLength(0);
+      expect(result.duplicates).toHaveLength(0);
+    });
+
+    it('should handle both arrays empty', () => {
+      const result = mergeTransactionsWithMetadata([], []);
+
+      expect(result.merged).toHaveLength(0);
+      expect(result.added).toHaveLength(0);
+      expect(result.duplicates).toHaveLength(0);
+    });
+
+    it('should detect duplicates based on composite key', () => {
+      const existing: Transaction[] = [
+        {
+          id: '1',
+          date: new Date('2024-01-01'),
+          description: 'Coffee',
+          amount: -5,
+          currency: 'USD',
+          isManuallyEdited: false,
+        },
+      ];
+
+      const newOnes: Transaction[] = [
+        // Same date, description, amount, currency = duplicate
+        {
+          id: '2',
+          date: new Date('2024-01-01'),
+          description: 'Coffee',
+          amount: -5,
+          currency: 'USD',
+          isManuallyEdited: false,
+        },
+        // Different amount = not duplicate
+        {
+          id: '3',
+          date: new Date('2024-01-01'),
+          description: 'Coffee',
+          amount: -6,
+          currency: 'USD',
+          isManuallyEdited: false,
+        },
+        // Different currency = not duplicate
+        {
+          id: '4',
+          date: new Date('2024-01-01'),
+          description: 'Coffee',
+          amount: -5,
+          currency: 'EUR',
+          isManuallyEdited: false,
+        },
+        // Different description = not duplicate
+        {
+          id: '5',
+          date: new Date('2024-01-01'),
+          description: 'Tea',
+          amount: -5,
+          currency: 'USD',
+          isManuallyEdited: false,
+        },
+        // Different date = not duplicate
+        {
+          id: '6',
+          date: new Date('2024-01-02'),
+          description: 'Coffee',
+          amount: -5,
+          currency: 'USD',
+          isManuallyEdited: false,
+        },
+      ];
+
+      const result = mergeTransactionsWithMetadata(existing, newOnes);
+
+      expect(result.merged).toHaveLength(5); // 1 existing + 4 new
+      expect(result.added).toHaveLength(4);
+      expect(result.duplicates).toHaveLength(1);
+    });
+
+    it('should preserve order: existing first, then added', () => {
+      const existing: Transaction[] = [
+        {
+          id: '1',
+          date: new Date('2024-01-01'),
+          description: 'First',
+          amount: -10,
+          currency: 'USD',
+          isManuallyEdited: false,
+        },
+      ];
+
+      const newOnes: Transaction[] = [
+        {
+          id: '2',
+          date: new Date('2024-01-02'),
+          description: 'Second',
+          amount: -20,
+          currency: 'USD',
+          isManuallyEdited: false,
+        },
+        {
+          id: '3',
+          date: new Date('2024-01-03'),
+          description: 'Third',
+          amount: -30,
+          currency: 'USD',
+          isManuallyEdited: false,
+        },
+      ];
+
+      const result = mergeTransactionsWithMetadata(existing, newOnes);
+
+      expect(result.merged[0]?.description).toBe('First');
+      expect(result.merged[1]?.description).toBe('Second');
+      expect(result.merged[2]?.description).toBe('Third');
     });
   });
 });

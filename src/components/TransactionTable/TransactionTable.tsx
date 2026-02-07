@@ -64,6 +64,9 @@ export function TransactionTable({
               Date
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+              Source
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
               Description
             </th>
             <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
@@ -88,6 +91,18 @@ export function TransactionTable({
             >
               <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-900">
                 {formatDate(transaction.date)}
+              </td>
+              <td className="px-4 py-3 text-sm">
+                {transaction.metadata?.fileName && (
+                  <span
+                    className="inline-flex max-w-[150px] items-center truncate rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700"
+                    title={transaction.metadata.fileName}
+                  >
+                    {transaction.metadata.fileName.length > 20
+                      ? `${transaction.metadata.fileName.substring(0, 17)}...`
+                      : transaction.metadata.fileName}
+                  </span>
+                )}
               </td>
               <td className="max-w-xs truncate px-4 py-3 text-sm text-gray-900">
                 {transaction.description}
