@@ -7,7 +7,7 @@ import { FileList } from '@/components/FileList';
 import { parseFile, FileParserError } from '@/utils/fileParser';
 import { mergeTransactionsWithMetadata } from '@/utils/fileExporter';
 import { importCategoryFromFile } from '@/utils/categoryValidator';
-import type { Transaction } from '@/types';
+import type { Transaction, TransactionMetadata } from '@/types';
 
 interface UploadedFileInfo {
   id: string;
@@ -80,7 +80,23 @@ function App() {
           row[detectedColumns.subcategory ?? '']
         );
 
-        return {
+        const merchant = detectedColumns.merchant
+          ? cellToString(row[detectedColumns.merchant])
+          : undefined;
+
+        const baseTransaction: {
+          id: string;
+          date: Date;
+          description: string;
+          amount: number;
+          currency: string;
+          category?: string;
+          subcategory?: string;
+          originalCategory?: string;
+          confidence?: number;
+          isManuallyEdited: boolean;
+          metadata: TransactionMetadata;
+        } = {
           id: `${fileId}-${String(index)}`,
           date: isNaN(date.getTime()) ? new Date() : date,
           description: detectedColumns.description
@@ -88,10 +104,6 @@ function App() {
             : '',
           amount,
           currency,
-          ...importedCategories, // Spread imported categories
-          ...(importedCategories.category && {
-            originalCategory: importedCategories.category,
-          }),
           isManuallyEdited: false,
           metadata: {
             source: 'upload' as const,
@@ -100,6 +112,18 @@ function App() {
             rowIndex: index,
             rawData: row,
           },
+        };
+
+        if (merchant) {
+          (baseTransaction as Transaction).merchant = merchant;
+        }
+
+        return {
+          ...baseTransaction,
+          ...importedCategories,
+          ...(importedCategories.category && {
+            originalCategory: importedCategories.category,
+          }),
         };
       });
 
@@ -164,7 +188,9 @@ function App() {
   };
 
   const handleRemoveFile = useCallback((fileId: string) => {
-    setTransactions((prev) => prev.filter((t) => t.metadata?.fileId !== fileId));
+    setTransactions((prev) =>
+      prev.filter((t) => t.metadata?.fileId !== fileId)
+    );
     setUploadedFiles((prev) => prev.filter((f) => f.id !== fileId));
   }, []);
 
@@ -180,7 +206,7 @@ function App() {
       <header className="bg-primary-600 text-white shadow-lg">
         <div className="mx-auto max-w-7xl px-4 py-6">
           <h1 className="text-3xl font-bold">Expense Categorizer</h1>
-          <p className="mt-1 text-primary-100">
+          <p className="text-primary-100 mt-1">
             AI-powered expense tracking with progressive ML categorization
           </p>
         </div>
@@ -194,60 +220,60 @@ function App() {
             Upload your bank statements to automatically categorize expenses
             using machine learning.
           </p>
-            <FileUpload onFileUpload={(file) => void handleFileUpload(file)} />
+          <FileUpload onFileUpload={(file) => void handleFileUpload(file)} />
 
-            {mergeSummary && (
-              <MergeSummary
-                fileName={mergeSummary.fileName}
-                addedCount={mergeSummary.addedCount}
-                duplicateCount={mergeSummary.duplicateCount}
-                onDismiss={() => {
-                  setMergeSummary(null);
-                }}
-              />
-            )}
+          {mergeSummary && (
+            <MergeSummary
+              fileName={mergeSummary.fileName}
+              addedCount={mergeSummary.addedCount}
+              duplicateCount={mergeSummary.duplicateCount}
+              onDismiss={() => {
+                setMergeSummary(null);
+              }}
+            />
+          )}
 
-            {uploadedFiles.length > 0 && (
-              <FileList
-                files={uploadedFiles}
-                onRemoveFile={handleRemoveFile}
-                onClearAll={handleClearAll}
-              />
-            )}
+          {uploadedFiles.length > 0 && (
+            <FileList
+              files={uploadedFiles}
+              onRemoveFile={handleRemoveFile}
+              onClearAll={handleClearAll}
+            />
+          )}
 
-            {error && (
-              <div className="mt-4 rounded-md bg-red-50 p-4 text-red-700">
-                {error}
-              </div>
-            )}
-            {isLoading && (
-              <div className="mt-4 text-center text-gray-600">
-                Processing file...
-              </div>
-            )}
+          {error && (
+            <div className="mt-4 rounded-md bg-red-50 p-4 text-red-700">
+              {error}
+            </div>
+          )}
+          {isLoading && (
+            <div className="mt-4 text-center text-gray-600">
+              Processing file...
+            </div>
+          )}
 
-            {transactions.length > 0 && (
-              <div className="mt-6">
-                <div className="mb-4 flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800">
-                      {transactions.length} Transactions
-                    </h3>
-                    {uploadedFiles.length > 0 && (
-                      <span className="text-sm text-gray-500">
-                        From {uploadedFiles.length}{' '}
-                        {uploadedFiles.length === 1 ? 'file' : 'files'}
-                      </span>
-                    )}
-                  </div>
-                  <DownloadButton transactions={transactions} />
+          {transactions.length > 0 && (
+            <div className="mt-6">
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    {transactions.length} Transactions
+                  </h3>
+                  {uploadedFiles.length > 0 && (
+                    <span className="text-sm text-gray-500">
+                      From {uploadedFiles.length}{' '}
+                      {uploadedFiles.length === 1 ? 'file' : 'files'}
+                    </span>
+                  )}
                 </div>
-                <TransactionTable
-                  transactions={transactions}
-                  onCategoryChange={handleCategoryChange}
-                />
+                <DownloadButton transactions={transactions} />
               </div>
-            )}
+              <TransactionTable
+                transactions={transactions}
+                onCategoryChange={handleCategoryChange}
+              />
+            </div>
+          )}
         </div>
       </main>
     </div>

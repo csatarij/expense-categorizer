@@ -32,9 +32,13 @@ describe('columnDetector', () => {
     });
 
     it('should calculate distance for typos', () => {
-      expect(levenshteinDistance('description', 'descritpion')).toBeLessThanOrEqual(2);
+      expect(
+        levenshteinDistance('description', 'descritpion')
+      ).toBeLessThanOrEqual(2);
       expect(levenshteinDistance('amount', 'ammount')).toBeLessThanOrEqual(1);
-      expect(levenshteinDistance('category', 'catagory')).toBeLessThanOrEqual(1);
+      expect(levenshteinDistance('category', 'catagory')).toBeLessThanOrEqual(
+        1
+      );
     });
   });
 
@@ -135,7 +139,13 @@ describe('columnDetector', () => {
 
   describe('analyzeColumnContent', () => {
     it('should detect date column', () => {
-      const values = ['2024-01-01', '2024-01-02', '2024-01-03', '2024-01-04', '2024-01-05'];
+      const values = [
+        '2024-01-01',
+        '2024-01-02',
+        '2024-01-03',
+        '2024-01-04',
+        '2024-01-05',
+      ];
       expect(analyzeColumnContent(values)).toBe('date');
     });
 
@@ -159,11 +169,23 @@ describe('columnDetector', () => {
 
     it('should handle mixed content based on threshold', () => {
       // 70% dates should be detected as date
-      const mostlyDates = ['2024-01-01', '2024-01-02', '2024-01-03', 'invalid', '2024-01-05'];
+      const mostlyDates = [
+        '2024-01-01',
+        '2024-01-02',
+        '2024-01-03',
+        'invalid',
+        '2024-01-05',
+      ];
       expect(analyzeColumnContent(mostlyDates)).toBe('date');
 
       // Less than 70% should be string
-      const mixedValues = ['2024-01-01', '2024-01-02', 'text', 'more text', 'even more'];
+      const mixedValues = [
+        '2024-01-01',
+        '2024-01-02',
+        'text',
+        'more text',
+        'even more',
+      ];
       expect(analyzeColumnContent(mixedValues)).toBe('string');
     });
   });
@@ -348,7 +370,12 @@ describe('columnDetector', () => {
       });
 
       it('should handle multiple date columns (prefer first match)', () => {
-        const headers = ['Transaction Date', 'Posted Date', 'Description', 'Amount'];
+        const headers = [
+          'Transaction Date',
+          'Posted Date',
+          'Description',
+          'Amount',
+        ];
         const result = detectColumns(headers);
 
         expect(result.mapping.date).toBe('Transaction Date');
@@ -428,7 +455,14 @@ describe('columnDetector', () => {
 
     describe('with real-world data', () => {
       it('should handle typical bank statement headers', () => {
-        const headers = ['Posted Date', 'Reference', 'Description', 'Debits', 'Credits', 'Balance'];
+        const headers = [
+          'Posted Date',
+          'Reference',
+          'Description',
+          'Debits',
+          'Credits',
+          'Balance',
+        ];
         const result = detectColumns(headers);
 
         expect(result.mapping.date).toBe('Posted Date');
@@ -438,11 +472,17 @@ describe('columnDetector', () => {
       });
 
       it('should handle credit card statement headers', () => {
-        const headers = ['Trans Date', 'Post Date', 'Merchant Name', 'Category', 'Amount'];
+        const headers = [
+          'Trans Date',
+          'Post Date',
+          'Merchant Name',
+          'Category',
+          'Amount',
+        ];
         const result = detectColumns(headers);
 
         expect(result.mapping.date).toBe('Trans Date');
-        expect(result.mapping.description).toBe('Merchant Name');
+        expect(result.mapping.merchant).toBe('Merchant Name');
         expect(result.mapping.category).toBe('Category');
         expect(result.mapping.amount).toBe('Amount');
       });

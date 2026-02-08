@@ -28,6 +28,7 @@ function transactionsToRows(
   return transactions.map((transaction) => {
     const baseRow: Record<string, unknown> = {
       Date: transaction.date.toISOString().split('T')[0],
+      Merchant: transaction.merchant || '',
       Description: transaction.description,
       Amount: transaction.amount,
       Currency: transaction.currency,
@@ -91,6 +92,7 @@ export function exportToXLSX(
   // Set column widths for better readability
   const columnWidths = [
     { wch: 12 }, // Date
+    { wch: 25 }, // Merchant
     { wch: 40 }, // Description
     { wch: 12 }, // Amount
     { wch: 10 }, // Currency

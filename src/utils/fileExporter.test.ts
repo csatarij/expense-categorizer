@@ -82,6 +82,7 @@ describe('fileExporter', () => {
       expect(rows).toEqual([
         {
           Date: '2024-01-01',
+          Merchant: '',
           Description: 'Grocery Store',
           Amount: -50.25,
           Currency: 'USD',
@@ -91,6 +92,7 @@ describe('fileExporter', () => {
         },
         {
           Date: '2024-01-02',
+          Merchant: '',
           Description: 'Coffee Shop',
           Amount: -5.5,
           Currency: 'EUR',

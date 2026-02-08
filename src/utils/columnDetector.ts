@@ -12,8 +12,16 @@ export interface ColumnDetectionResult {
  * Common column name patterns for detection
  */
 export const COLUMN_PATTERNS: Record<keyof ColumnMapping, string[]> = {
-  date: ['date', 'transaction date', 'posted date', 'trans date', 'txn date', 'posting date'],
-  description: ['description', 'merchant', 'name', 'details', 'memo', 'payee', 'narrative'],
+  date: [
+    'date',
+    'transaction date',
+    'posted date',
+    'trans date',
+    'txn date',
+    'posting date',
+  ],
+  description: ['description', 'details', 'memo', 'narrative', 'transaction'],
+  merchant: ['merchant', 'payee', 'vendor', 'store', 'retailer', 'name'],
   amount: ['amount', 'transaction amount', 'value', 'total', 'sum'],
   currency: ['currency', 'curr', 'ccy', 'currency code'],
   debit: ['debit', 'withdrawal', 'charge', 'debit amount', 'money out'],
@@ -81,7 +89,10 @@ export function isDateLike(value: unknown): boolean {
   }
 
   // Safe to convert since we check for object type
-  const strValue = typeof value === 'object' ? '' : (value as string | number | boolean).toString().trim();
+  const strValue =
+    typeof value === 'object'
+      ? ''
+      : (value as string | number | boolean).toString().trim();
   if (!strValue) return false;
 
   // Common date patterns
@@ -231,7 +242,10 @@ function findFuzzyMatch(
   let bestSimilarity = 0;
 
   for (const pattern of patterns) {
-    const similarity = calculateSimilarity(normalizedHeader, pattern.toLowerCase());
+    const similarity = calculateSimilarity(
+      normalizedHeader,
+      pattern.toLowerCase()
+    );
     if (similarity > bestSimilarity) {
       bestSimilarity = similarity;
     }
@@ -248,7 +262,10 @@ function findFuzzyMatch(
 /**
  * Extract column values from sample rows
  */
-function getColumnValues(sampleRows: unknown[][], columnIndex: number): unknown[] {
+function getColumnValues(
+  sampleRows: unknown[][],
+  columnIndex: number
+): unknown[] {
   return sampleRows.map((row) => row[columnIndex]);
 }
 
@@ -354,7 +371,11 @@ export function detectColumns(
         usedIndices.add(numberColumns[0].index);
       }
       // If we found two number columns, they might be debit/credit
-      else if (numberColumns.length === 2 && numberColumns[0] && numberColumns[1]) {
+      else if (
+        numberColumns.length === 2 &&
+        numberColumns[0] &&
+        numberColumns[1]
+      ) {
         // Check headers for hints
         const col1Lower = numberColumns[0].header.toLowerCase();
         const col2Lower = numberColumns[1].header.toLowerCase();
@@ -383,7 +404,11 @@ export function detectColumns(
 
     // Try to detect description by finding longest string column
     if (!mapping.description) {
-      let bestColumn: { index: number; header: string; avgLength: number } | null = null;
+      let bestColumn: {
+        index: number;
+        header: string;
+        avgLength: number;
+      } | null = null;
 
       for (let i = 0; i < headers.length; i++) {
         if (usedIndices.has(i)) continue;
@@ -397,9 +422,10 @@ export function detectColumns(
         if (contentType === 'string') {
           const avgLength =
             values.reduce((sum: number, v) => {
-              const str = v !== null && v !== undefined && typeof v !== 'object'
-                ? (v as string | number | boolean).toString()
-                : '';
+              const str =
+                v !== null && v !== undefined && typeof v !== 'object'
+                  ? (v as string | number | boolean).toString()
+                  : '';
               return sum + str.length;
             }, 0) / values.length;
 
