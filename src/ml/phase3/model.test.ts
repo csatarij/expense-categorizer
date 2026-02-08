@@ -228,7 +228,7 @@ describe('getModelMetrics', () => {
           createTransaction({ description: 'ITEM TWO', category: 'Shopping' }),
         ],
         { epochs: 1 }
-      ).then(async () => {
+      ).then(() => {
         const metrics = getModelMetrics();
         expect(metrics.trainingSamples).toBeGreaterThan(0);
         expect(metrics.lastTrainedAt).toBeInstanceOf(Date);
