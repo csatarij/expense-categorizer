@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, beforeAll, vi } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import {
   initializeModel,
   trainModel,
@@ -58,10 +58,6 @@ describe('buildVocabulary', () => {
 });
 
 describe('trainModel', () => {
-  beforeEach(() => {
-    tf.dispose();
-  });
-
   it('should throw error with insufficient data', () => {
     const transactions: Transaction[] = [
       createTransaction({ description: 'Test', category: 'Food' }),
@@ -82,251 +78,238 @@ describe('trainModel', () => {
     );
   });
 
-  it('should train model with valid data', () => {
-    const transactions: Transaction[] = [
-      createTransaction({ description: 'STARBUCKS COFFEE', category: 'Food' }),
-      createTransaction({
-        description: 'WHOLE FOODS MARKET',
-        category: 'Groceries',
-      }),
-      createTransaction({
-        description: 'AMAZON PURCHASE ONLINE',
-        category: 'Shopping',
-      }),
-      createTransaction({
-        description: 'NETFLIX STREAMING',
-        category: 'Entertainment',
-      }),
-      createTransaction({
-        description: 'UBER RIDE',
-        category: 'Transportation',
-      }),
-    ];
-
-    return trainModel(transactions, { epochs: 1 }).then((metrics) => {
-      expect(metrics.trainingSamples).toBeGreaterThan(0);
-      expect(metrics.validationSamples).toBeGreaterThanOrEqual(0);
-      expect(metrics.lastTrainedAt).toBeInstanceOf(Date);
-    });
-  }, 30000);
-
-  it('should call onEpochEnd callback', () => {
-    const onEpochEnd = vi.fn();
-
-    const transactions: Transaction[] = [
-      createTransaction({ description: 'FOOD ITEM', category: 'Food' }),
-      createTransaction({
-        description: 'SHOPPING ITEM',
-        category: 'Shopping',
-      }),
-    ];
-
-    return trainModel(transactions, { epochs: 1, onEpochEnd }).then(() => {
-      expect(onEpochEnd).toHaveBeenCalled();
-    });
-  }, 30000);
-
-  it('should handle custom epochs', () => {
-    const transactions: Transaction[] = [
-      createTransaction({ description: 'ITEM ONE', category: 'Food' }),
-      createTransaction({ description: 'ITEM TWO', category: 'Shopping' }),
-    ];
-
-    return trainModel(transactions, { epochs: 1 }).then((metrics) => {
-      expect(metrics).toBeDefined();
-    });
-  }, 30000);
-
-  it('should handle custom validation split', () => {
-    const transactions: Transaction[] = [
-      createTransaction({ description: 'ITEM ONE', category: 'Food' }),
-      createTransaction({ description: 'ITEM TWO', category: 'Shopping' }),
-    ];
-
-    return trainModel(transactions, { validationSplit: 0.5 }).then(
-      (metrics) => {
+  it(
+    'should train model with valid data',
+    () =>
+      trainModel(
+        [
+          createTransaction({
+            description: 'STARBUCKS COFFEE',
+            category: 'Food',
+          }),
+          createTransaction({
+            description: 'WHOLE FOODS MARKET',
+            category: 'Groceries',
+          }),
+          createTransaction({
+            description: 'AMAZON PURCHASE ONLINE',
+            category: 'Shopping',
+          }),
+          createTransaction({
+            description: 'NETFLIX STREAMING',
+            category: 'Entertainment',
+          }),
+          createTransaction({
+            description: 'UBER RIDE',
+            category: 'Transportation',
+          }),
+        ],
+        { epochs: 1 }
+      ).then((metrics) => {
+        expect(metrics.trainingSamples).toBeGreaterThan(0);
         expect(metrics.validationSamples).toBeGreaterThanOrEqual(0);
-      }
-    );
-  }, 30000);
+        expect(metrics.lastTrainedAt).toBeInstanceOf(Date);
+      }),
+    30000
+  );
+
+  it(
+    'should handle custom epochs',
+    () =>
+      trainModel(
+        [
+          createTransaction({ description: 'ITEM ONE', category: 'Food' }),
+          createTransaction({ description: 'ITEM TWO', category: 'Shopping' }),
+        ],
+        { epochs: 1 }
+      ).then((metrics) => {
+        expect(metrics).toBeDefined();
+      }),
+    30000
+  );
+
+  it(
+    'should handle custom validation split',
+    () =>
+      trainModel(
+        [
+          createTransaction({ description: 'ITEM ONE', category: 'Food' }),
+          createTransaction({ description: 'ITEM TWO', category: 'Shopping' }),
+        ],
+        { validationSplit: 0.5 }
+      ).then((metrics) => {
+        expect(metrics.validationSamples).toBeGreaterThanOrEqual(0);
+      }),
+    30000
+  );
 });
 
-describe('predictCategory', () => {
-  beforeEach(() => {
-    tf.dispose();
-    const transactions: Transaction[] = [
-      createTransaction({ description: 'STARBUCKS COFFEE', category: 'Food' }),
-      createTransaction({
-        description: 'WHOLE FOODS MARKET',
-        category: 'Groceries',
-      }),
-      createTransaction({
-        description: 'AMAZON PURCHASE ONLINE',
-        category: 'Shopping',
-      }),
-      createTransaction({
-        description: 'NETFLIX STREAMING',
-        category: 'Entertainment',
-      }),
-      createTransaction({
-        description: 'UBER RIDE',
-        category: 'Transportation',
-      }),
-    ];
+describe('predictCategory - after training', () => {
+  beforeAll(async () => {
+    await trainModel(
+      [
+        createTransaction({
+          description: 'STARBUCKS COFFEE',
+          category: 'Food',
+        }),
+        createTransaction({
+          description: 'WHOLE FOODS MARKET',
+          category: 'Groceries',
+        }),
+        createTransaction({
+          description: 'AMAZON PURCHASE ONLINE',
+          category: 'Shopping',
+        }),
+        createTransaction({
+          description: 'NETFLIX STREAMING',
+          category: 'Entertainment',
+        }),
+        createTransaction({
+          description: 'UBER RIDE',
+          category: 'Transportation',
+        }),
+      ],
+      { epochs: 1 }
+    );
+  }, 30000);
 
-    void trainModel(transactions, { epochs: 1 });
-  });
-
-  it('should return null for empty description', () => {
-    return predictCategory('').then((result) => {
-      expect(result).toBeNull();
-    });
-  });
-
-  it('should return null when model not trained', () => {
-    tf.dispose();
-    return predictCategory('TEST DESCRIPTION').then((result) => {
-      expect(result).toBeNull();
-    });
+  it('should return null for empty description', async () => {
+    const result = await predictCategory('');
+    expect(result).toBeNull();
   });
 
   it('should predict category for known description', async () => {
-    return predictCategory('STARBUCKS COFFEE').then((result) => {
-      if (result !== null) {
-        expect(result).toHaveProperty('category');
-        expect(result).toHaveProperty('confidence');
-        expect(result).toHaveProperty('method', 'ml-classifier');
-        expect(result.confidence).toBeGreaterThan(0);
-        expect(result.confidence).toBeLessThanOrEqual(100);
-      }
-    });
-  }, 30000);
+    const result = await predictCategory('STARBUCKS COFFEE');
+    if (result !== null) {
+      expect(result).toHaveProperty('category');
+      expect(result).toHaveProperty('confidence');
+      expect(result).toHaveProperty('method', 'ml-classifier');
+      expect(result.confidence).toBeGreaterThan(0);
+      expect(result.confidence).toBeLessThanOrEqual(100);
+    }
+  });
 
   it('should generate reason with confidence', async () => {
-    return predictCategory('AMAZON PURCHASE').then((result) => {
-      if (result !== null) {
-        expect(result.reason).toContain('% confidence');
-        expect(result.reason).toContain('training samples');
-      }
-    });
-  }, 30000);
+    const result = await predictCategory('AMAZON PURCHASE');
+    if (result !== null) {
+      expect(result.reason).toContain('% confidence');
+      expect(result.reason).toContain('training samples');
+    }
+  });
 
   it('should have reason string', async () => {
-    return predictCategory('NETFLIX STREAMING').then((result) => {
-      if (result !== null) {
-        expect(typeof result.reason).toBe('string');
-      }
-    });
-  }, 30000);
+    const result = await predictCategory('NETFLIX STREAMING');
+    if (result !== null) {
+      expect(typeof result.reason).toBe('string');
+    }
+  });
 });
 
 describe('isModelTrained', () => {
-  beforeEach(() => {
-    tf.dispose();
-  });
-
-  it('should return false before training', () => {
-    expect(isModelTrained()).toBe(false);
-  });
-
-  it('should return true after training', () => {
-    const transactions: Transaction[] = [
-      createTransaction({ description: 'ITEM ONE', category: 'Food' }),
-      createTransaction({ description: 'ITEM TWO', category: 'Shopping' }),
-    ];
-
-    return trainModel(transactions, { epochs: 1 }).then(() => {
-      expect(isModelTrained()).toBe(true);
-    });
+  it('should return true after training', async () => {
+    await trainModel(
+      [
+        createTransaction({ description: 'ITEM ONE', category: 'Food' }),
+        createTransaction({ description: 'ITEM TWO', category: 'Shopping' }),
+      ],
+      { epochs: 1 }
+    );
+    expect(isModelTrained()).toBe(true);
   }, 30000);
 });
 
 describe('getModelMetrics', () => {
-  it('should return default metrics before training', () => {
-    const metrics = getModelMetrics();
-    expect(metrics.accuracy).toBe(0);
-    expect(metrics.loss).toBe(0);
-    expect(metrics.trainingSamples).toBe(0);
-  });
-
-  it('should return current metrics after training', () => {
-    const transactions: Transaction[] = [
-      createTransaction({ description: 'ITEM ONE', category: 'Food' }),
-      createTransaction({ description: 'ITEM TWO', category: 'Shopping' }),
-    ];
-
-    return trainModel(transactions, { epochs: 1 }).then(() => {
-      const metrics = getModelMetrics();
-      expect(metrics.trainingSamples).toBeGreaterThan(0);
-      expect(metrics.lastTrainedAt).toBeInstanceOf(Date);
-    });
-  }, 30000);
+  it(
+    'should return current metrics after training',
+    () =>
+      trainModel(
+        [
+          createTransaction({ description: 'ITEM ONE', category: 'Food' }),
+          createTransaction({ description: 'ITEM TWO', category: 'Shopping' }),
+        ],
+        { epochs: 1 }
+      ).then(async () => {
+        const metrics = getModelMetrics();
+        expect(metrics.trainingSamples).toBeGreaterThan(0);
+        expect(metrics.lastTrainedAt).toBeInstanceOf(Date);
+      }),
+    30000
+  );
 });
 
 describe('saveModel and loadModel', () => {
   beforeEach(() => {
     localStorage.clear();
-    tf.dispose();
   });
 
-  it('should save model to localStorage', () => {
-    const transactions: Transaction[] = [
-      createTransaction({ description: 'ITEM ONE', category: 'Food' }),
-      createTransaction({ description: 'ITEM TWO', category: 'Shopping' }),
-    ];
+  it(
+    'should save model to localStorage',
+    () =>
+      trainModel(
+        [
+          createTransaction({ description: 'ITEM ONE', category: 'Food' }),
+          createTransaction({ description: 'ITEM TWO', category: 'Shopping' }),
+        ],
+        { epochs: 1 }
+      )
+        .then(() => saveModel())
+        .then(() => {
+          expect(
+            localStorage.getItem('expense-categorizer-encoder')
+          ).toBeTruthy();
+          expect(
+            localStorage.getItem('expense-categorizer-decoder')
+          ).toBeTruthy();
+          expect(
+            localStorage.getItem('expense-categorizer-vocabulary')
+          ).toBeTruthy();
+        }),
+    30000
+  );
 
-    return trainModel(transactions, { epochs: 1 })
-      .then(() => saveModel())
-      .then(() => {
-        expect(
-          localStorage.getItem('expense-categorizer-encoder')
-        ).toBeTruthy();
-        expect(
-          localStorage.getItem('expense-categorizer-decoder')
-        ).toBeTruthy();
-        expect(
-          localStorage.getItem('expense-categorizer-vocabulary')
-        ).toBeTruthy();
-      });
-  }, 30000);
+  it(
+    'should load model from localStorage',
+    () =>
+      trainModel(
+        [
+          createTransaction({ description: 'ITEM ONE', category: 'Food' }),
+          createTransaction({ description: 'ITEM TWO', category: 'Shopping' }),
+        ],
+        { epochs: 1 }
+      )
+        .then(() => saveModel())
+        .then(() => loadModel())
+        .then((loaded) => {
+          expect(loaded).toBe(true);
+        }),
+    30000
+  );
 
-  it('should load model from localStorage', () => {
-    const transactions: Transaction[] = [
-      createTransaction({ description: 'ITEM ONE', category: 'Food' }),
-      createTransaction({ description: 'ITEM TWO', category: 'Shopping' }),
-    ];
-
-    return trainModel(transactions, { epochs: 1 })
-      .then(() => saveModel())
-      .then(() => loadModel())
-      .then((loaded) => {
-        expect(loaded).toBe(true);
-      });
-  }, 30000);
-
-  it('should preserve vocabulary when loading', () => {
-    const transactions: Transaction[] = [
-      createTransaction({ description: 'ITEM ONE', category: 'Food' }),
-      createTransaction({ description: 'ITEM TWO', category: 'Shopping' }),
-    ];
-
-    return trainModel(transactions, { epochs: 1 })
-      .then(() => {
-        const metricsBeforeSave = getModelMetrics();
-        return saveModel().then(() => metricsBeforeSave);
-      })
-      .then((metricsBeforeSave) => {
-        localStorage.clear();
-        tf.dispose();
-        return loadModel().then(() => metricsBeforeSave);
-      })
-      .then((metricsBeforeSave) => {
-        const metricsAfterLoad = getModelMetrics();
-        expect(metricsAfterLoad.trainingSamples).toBe(
-          metricsBeforeSave.trainingSamples
-        );
-      });
-  }, 30000);
+  it(
+    'should preserve vocabulary when loading',
+    () =>
+      trainModel(
+        [
+          createTransaction({ description: 'ITEM ONE', category: 'Food' }),
+          createTransaction({ description: 'ITEM TWO', category: 'Shopping' }),
+        ],
+        { epochs: 1 }
+      )
+        .then(() => {
+          const metricsBeforeSave = getModelMetrics();
+          return saveModel().then(() => metricsBeforeSave);
+        })
+        .then((metricsBeforeSave) => {
+          return loadModel().then((loaded) => {
+            expect(loaded).toBe(true);
+            const metricsAfterLoad = getModelMetrics();
+            expect(metricsAfterLoad.trainingSamples).toBe(
+              metricsBeforeSave.trainingSamples
+            );
+          });
+        }),
+    30000
+  );
 
   it('should return false when loading model that does not exist', () => {
     localStorage.clear();

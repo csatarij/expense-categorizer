@@ -367,6 +367,11 @@ export async function loadModel(): Promise<boolean> {
     );
 
     model = loadedModel;
+    model.compile({
+      optimizer: tf.train.adam(0.001),
+      loss: 'binaryCrossentropy',
+      metrics: ['accuracy'],
+    });
     isInitialized = true;
 
     const encoderJson = localStorage.getItem('expense-categorizer-encoder');
