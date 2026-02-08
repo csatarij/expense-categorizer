@@ -4,7 +4,11 @@ import { getCategoryNames, getSubcategories } from '@/data/categories';
 
 export interface TransactionTableProps {
   transactions: Transaction[];
-  onCategoryChange?: (id: string, category: string, subcategory?: string) => void;
+  onCategoryChange?: (
+    id: string,
+    category: string,
+    subcategory?: string
+  ) => void;
 }
 
 export function TransactionTable({
@@ -60,25 +64,28 @@ export function TransactionTable({
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+            <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
               Date
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+            <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
               Source
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+            <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+              Merchant
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
               Description
             </th>
-            <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+            <th className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">
               Amount
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+            <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
               Category
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+            <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
               Subcategory
             </th>
-            <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+            <th className="px-4 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase">
               Confidence
             </th>
           </tr>
@@ -89,7 +96,7 @@ export function TransactionTable({
               key={transaction.id}
               className="transition-colors hover:bg-gray-50"
             >
-              <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-900">
+              <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-900">
                 {formatDate(transaction.date)}
               </td>
               <td className="px-4 py-3 text-sm">
@@ -105,23 +112,28 @@ export function TransactionTable({
                 )}
               </td>
               <td className="max-w-xs truncate px-4 py-3 text-sm text-gray-900">
+                {transaction.merchant || (
+                  <span className="text-gray-400">—</span>
+                )}
+              </td>
+              <td className="max-w-xs truncate px-4 py-3 text-sm text-gray-900">
                 {transaction.description}
               </td>
               <td
-                className={`whitespace-nowrap px-4 py-3 text-right text-sm font-medium ${
+                className={`px-4 py-3 text-right text-sm font-medium whitespace-nowrap ${
                   transaction.amount < 0 ? 'text-red-600' : 'text-green-600'
                 }`}
               >
                 {transaction.amount < 0 ? '-' : '+'}
                 {formatAmount(transaction.amount, transaction.currency)}
               </td>
-              <td className="whitespace-nowrap px-4 py-3 text-sm">
+              <td className="px-4 py-3 text-sm whitespace-nowrap">
                 <select
                   value={transaction.category || ''}
                   onChange={(e) => {
                     handleCategoryChange(transaction.id, e.target.value);
                   }}
-                  className="block w-full rounded-md border-gray-300 text-sm focus:border-primary-500 focus:ring-primary-500"
+                  className="focus:border-primary-500 focus:ring-primary-500 block w-full rounded-md border-gray-300 text-sm"
                 >
                   <option value="">Select category</option>
                   {categories.map((cat) => (
@@ -131,7 +143,7 @@ export function TransactionTable({
                   ))}
                 </select>
               </td>
-              <td className="whitespace-nowrap px-4 py-3 text-sm">
+              <td className="px-4 py-3 text-sm whitespace-nowrap">
                 <select
                   value={transaction.subcategory || ''}
                   onChange={(e) => {
@@ -142,7 +154,7 @@ export function TransactionTable({
                     );
                   }}
                   disabled={!transaction.category}
-                  className="block w-full rounded-md border-gray-300 text-sm focus:border-primary-500 focus:ring-primary-500 disabled:bg-gray-100 disabled:text-gray-400"
+                  className="focus:border-primary-500 focus:ring-primary-500 block w-full rounded-md border-gray-300 text-sm disabled:bg-gray-100 disabled:text-gray-400"
                 >
                   <option value="">Select subcategory</option>
                   {transaction.category &&
@@ -153,7 +165,7 @@ export function TransactionTable({
                     ))}
                 </select>
               </td>
-              <td className="whitespace-nowrap px-4 py-3 text-center text-sm">
+              <td className="px-4 py-3 text-center text-sm whitespace-nowrap">
                 {transaction.confidence !== undefined ? (
                   <span
                     className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ${

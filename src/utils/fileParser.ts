@@ -125,7 +125,9 @@ export async function parseCSV(file: File): Promise<Record<string, unknown>[]> {
 /**
  * Parses an XLSX file and returns the data as an array of objects
  */
-export async function parseXLSX(file: File): Promise<Record<string, unknown>[]> {
+export async function parseXLSX(
+  file: File
+): Promise<Record<string, unknown>[]> {
   try {
     const arrayBuffer = await readFileAsArrayBuffer(file);
     const workbook = XLSX.read(arrayBuffer, {
@@ -178,7 +180,12 @@ function detectColumnMappings(headers: string[]): ColumnMapping {
   const lowerHeaders = headers.map((h) => h.toLowerCase().trim());
 
   // Date detection
-  const datePatterns = ['date', 'transaction date', 'trans date', 'posting date'];
+  const datePatterns = [
+    'date',
+    'transaction date',
+    'trans date',
+    'posting date',
+  ];
   const dateIndex = lowerHeaders.findIndex((h) =>
     datePatterns.some((p) => h.includes(p))
   );
@@ -187,12 +194,28 @@ function detectColumnMappings(headers: string[]): ColumnMapping {
   }
 
   // Description detection
-  const descPatterns = ['description', 'desc', 'memo', 'narrative', 'details', 'transaction'];
+  const descPatterns = [
+    'description',
+    'desc',
+    'memo',
+    'narrative',
+    'details',
+    'transaction',
+  ];
   const descIndex = lowerHeaders.findIndex((h) =>
     descPatterns.some((p) => h.includes(p) && !h.includes('date'))
   );
   if (descIndex !== -1 && headers[descIndex]) {
     mapping.description = headers[descIndex];
+  }
+
+  // Merchant detection
+  const merchantPatterns = ['merchant', 'payee', 'vendor', 'store', 'retailer'];
+  const merchantIndex = lowerHeaders.findIndex((h) =>
+    merchantPatterns.some((p) => h.includes(p))
+  );
+  if (merchantIndex !== -1 && headers[merchantIndex]) {
+    mapping.merchant = headers[merchantIndex];
   }
 
   // Amount detection

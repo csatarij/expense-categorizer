@@ -8,7 +8,9 @@ import { getCategoryNames, getSubcategories } from '@/data/categories';
 /**
  * Create a mock transaction for testing
  */
-function createMockTransaction(overrides: Partial<Transaction> = {}): Transaction {
+function createMockTransaction(
+  overrides: Partial<Transaction> = {}
+): Transaction {
   return {
     id: 'test-1',
     date: new Date('2024-01-15'),
@@ -49,7 +51,9 @@ describe('TransactionTable', () => {
     it('should display empty state when no transactions', () => {
       render(<TransactionTable transactions={[]} />);
 
-      expect(screen.getByText(/no transactions to display/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/no transactions to display/i)
+      ).toBeInTheDocument();
     });
 
     it('should render table with column headers', () => {
@@ -112,8 +116,11 @@ describe('TransactionTable', () => {
     });
 
     it('should display long descriptions (truncated via CSS)', () => {
-      const longDescription = 'A very long transaction description that should be truncated by CSS';
-      const transactions = [createMockTransaction({ description: longDescription })];
+      const longDescription =
+        'A very long transaction description that should be truncated by CSS';
+      const transactions = [
+        createMockTransaction({ description: longDescription }),
+      ];
       render(<TransactionTable transactions={transactions} />);
 
       expect(screen.getByText(longDescription)).toBeInTheDocument();
@@ -175,11 +182,15 @@ describe('TransactionTable', () => {
       render(<TransactionTable transactions={transactions} />);
 
       const categorySelect = getCategorySelect();
-      expect(within(categorySelect).getByText('Select category')).toBeInTheDocument();
+      expect(
+        within(categorySelect).getByText('Select category')
+      ).toBeInTheDocument();
     });
 
     it('should display selected category', () => {
-      const transactions = [createMockTransaction({ category: 'Food & Dining' })];
+      const transactions = [
+        createMockTransaction({ category: 'Food & Dining' }),
+      ];
       render(<TransactionTable transactions={transactions} />);
 
       const categorySelect = getCategorySelect();
@@ -200,7 +211,11 @@ describe('TransactionTable', () => {
       const categorySelect = getCategorySelect();
       await user.selectOptions(categorySelect, 'Shopping');
 
-      expect(onCategoryChange).toHaveBeenCalledWith('tx-1', 'Shopping', undefined);
+      expect(onCategoryChange).toHaveBeenCalledWith(
+        'tx-1',
+        'Shopping',
+        undefined
+      );
     });
   });
 
@@ -214,7 +229,9 @@ describe('TransactionTable', () => {
     });
 
     it('should be enabled when category is selected', () => {
-      const transactions = [createMockTransaction({ category: 'Food & Dining' })];
+      const transactions = [
+        createMockTransaction({ category: 'Food & Dining' }),
+      ];
       render(<TransactionTable transactions={transactions} />);
 
       const subcategorySelect = getSubcategorySelect();
@@ -222,14 +239,18 @@ describe('TransactionTable', () => {
     });
 
     it('should show subcategories for selected category', () => {
-      const transactions = [createMockTransaction({ category: 'Food & Dining' })];
+      const transactions = [
+        createMockTransaction({ category: 'Food & Dining' }),
+      ];
       render(<TransactionTable transactions={transactions} />);
 
       const subcategorySelect = getSubcategorySelect();
       const subcategories = getSubcategories('Food & Dining');
 
       subcategories.forEach((subcategory) => {
-        expect(within(subcategorySelect).getByText(subcategory)).toBeInTheDocument();
+        expect(
+          within(subcategorySelect).getByText(subcategory)
+        ).toBeInTheDocument();
       });
     });
 
@@ -300,7 +321,7 @@ describe('TransactionTable', () => {
       const transactions = [createMockTransaction()];
       render(<TransactionTable transactions={transactions} />);
 
-      expect(screen.getByText('—')).toBeInTheDocument();
+      expect(screen.getAllByText('—')).toHaveLength(2);
     });
 
     it('should round confidence to nearest integer', () => {
@@ -374,7 +395,11 @@ describe('TransactionTable', () => {
       const secondCategorySelect = getCategorySelect(1);
       await user.selectOptions(secondCategorySelect, 'Entertainment');
 
-      expect(onCategoryChange).toHaveBeenCalledWith('tx-2', 'Entertainment', undefined);
+      expect(onCategoryChange).toHaveBeenCalledWith(
+        'tx-2',
+        'Entertainment',
+        undefined
+      );
     });
   });
 
@@ -384,7 +409,7 @@ describe('TransactionTable', () => {
       const transactions = [createMockTransaction()];
       render(<TransactionTable transactions={transactions} />);
 
-      expect(screen.getByText('—')).toBeInTheDocument();
+      expect(screen.getAllByText('—')).toHaveLength(2);
       const categorySelect = getCategorySelect();
       expect(categorySelect).toHaveValue('');
     });

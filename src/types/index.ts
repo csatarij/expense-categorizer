@@ -30,6 +30,7 @@ export interface Transaction {
   description: string;
   amount: number;
   currency: string;
+  merchant?: string;
   category?: string;
   subcategory?: string;
   originalCategory?: string;
@@ -60,6 +61,7 @@ export type CategoryTaxonomy = Record<string, string[]>;
 export interface ColumnMapping {
   date?: string;
   description?: string;
+  merchant?: string;
   amount?: string;
   currency?: string;
   category?: string;
