@@ -4,6 +4,7 @@ import { TransactionTable } from '@/components/TransactionTable';
 import { DownloadButton } from '@/components/DownloadButton';
 import { MergeSummary } from '@/components/MergeSummary';
 import { FileList } from '@/components/FileList';
+import { CategorizationControls } from '@/components/CategorizationControls';
 import { parseFile, FileParserError } from '@/utils/fileParser';
 import { mergeTransactionsWithMetadata } from '@/utils/fileExporter';
 import { importCategoryFromFile } from '@/utils/categoryValidator';
@@ -249,6 +250,15 @@ function App() {
           {isLoading && (
             <div className="mt-4 text-center text-gray-600">
               Processing file...
+            </div>
+          )}
+
+          {transactions.length > 0 && (
+            <div className="mt-6">
+              <CategorizationControls
+                transactions={transactions}
+                onCategorize={setTransactions}
+              />
             </div>
           )}
 

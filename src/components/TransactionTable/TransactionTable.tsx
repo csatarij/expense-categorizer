@@ -176,7 +176,7 @@ export function TransactionTable({
                           : 'bg-gray-100 text-gray-800'
                     }`}
                   >
-                    {Math.round(transaction.confidence * 100)}%
+                    {Math.round(transaction.confidence)}%
                   </span>
                 ) : (
                   <span className="text-gray-400">—</span>
