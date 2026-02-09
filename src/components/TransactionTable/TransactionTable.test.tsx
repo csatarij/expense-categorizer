@@ -62,7 +62,7 @@ describe('TransactionTable', () => {
 
       expect(screen.getByRole('table')).toBeInTheDocument();
       expect(screen.getByText('Date')).toBeInTheDocument();
-      expect(screen.getByText('Description')).toBeInTheDocument();
+      expect(screen.getByText('Entity')).toBeInTheDocument();
       expect(screen.getByText('Amount')).toBeInTheDocument();
       expect(screen.getByText('Category')).toBeInTheDocument();
       expect(screen.getByText('Subcategory')).toBeInTheDocument();
@@ -118,9 +118,7 @@ describe('TransactionTable', () => {
     it('should display long descriptions (truncated via CSS)', () => {
       const longDescription =
         'A very long transaction description that should be truncated by CSS';
-      const transactions = [
-        createMockTransaction({ entity: longDescription }),
-      ];
+      const transactions = [createMockTransaction({ entity: longDescription })];
       render(<TransactionTable transactions={transactions} />);
 
       expect(screen.getByText(longDescription)).toBeInTheDocument();
@@ -321,7 +319,7 @@ describe('TransactionTable', () => {
       const transactions = [createMockTransaction()];
       render(<TransactionTable transactions={transactions} />);
 
-      expect(screen.getAllByText('—')).toHaveLength(2);
+      expect(screen.getAllByText('—')).toHaveLength(1);
     });
 
     it('should round confidence to nearest integer', () => {
@@ -409,7 +407,7 @@ describe('TransactionTable', () => {
       const transactions = [createMockTransaction()];
       render(<TransactionTable transactions={transactions} />);
 
-      expect(screen.getAllByText('—')).toHaveLength(2);
+      expect(screen.getAllByText('—')).toHaveLength(1);
       const categorySelect = getCategorySelect();
       expect(categorySelect).toHaveValue('');
     });
