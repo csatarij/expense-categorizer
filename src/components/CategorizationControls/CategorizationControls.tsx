@@ -109,7 +109,7 @@ export function CategorizationControls({
           amount: transaction.amount,
           currency: transaction.currency,
           category: suggestion.category,
-          confidence: suggestion.confidence,
+          confidence: suggestion.confidence / 100,
           originalCategory: suggestion.category,
           isManuallyEdited: false,
         };
