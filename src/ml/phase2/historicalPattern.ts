@@ -372,7 +372,13 @@ export function categorizeByHistoricalPattern(
   learner?: PatternLearner
 ): CategorySuggestion | null {
   const patternLearner = learner ?? new PatternLearner();
-  patternLearner.learnFromTransactions(historicalData);
+
+  const filteredHistoricalData =
+    transaction.amount > 0
+      ? historicalData.filter((t) => t.category === 'Income')
+      : historicalData.filter((t) => t.category !== 'Income');
+
+  patternLearner.learnFromTransactions(filteredHistoricalData);
   return patternLearner.categorizeByPattern(transaction);
 }
 

@@ -252,16 +252,22 @@ export function trainTFIDFModel(transactions: Transaction[]): TFIDFModel {
 export function categorizeByTFIDF(
   description: string,
   transactions: Transaction[],
+  amount?: number,
   threshold: number = SIMILARITY_THRESHOLD
 ): CategorySuggestion | null {
   if (!description || description.trim() === '' || transactions.length === 0) {
     return null;
   }
 
-  const categorizedTransactions = transactions.filter(
+  let categorizedTransactions = transactions.filter(
     (t): t is Transaction & { category: string } =>
       !!t.category && t.category !== ''
   );
+
+  categorizedTransactions =
+    (amount ?? 0) > 0
+      ? categorizedTransactions.filter((t) => t.category === 'Income')
+      : categorizedTransactions.filter((t) => t.category !== 'Income');
 
   if (categorizedTransactions.length === 0) {
     return null;

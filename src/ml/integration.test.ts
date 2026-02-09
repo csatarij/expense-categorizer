@@ -126,7 +126,7 @@ describe('Categorization Integration Tests', () => {
 
     it('should categorize using historical patterns', () => {
       const result = categorizeByHistoricalPattern(
-        { entity: 'STARBUCKS #123', amount: 6.0, date: new Date() },
+        { entity: 'STARBUCKS #123', amount: -6.0, date: new Date() },
         mockTransactions
       );
       expect(result).not.toBeNull();

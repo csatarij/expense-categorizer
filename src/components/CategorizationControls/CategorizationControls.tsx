@@ -78,11 +78,19 @@ export function CategorizationControls({
         }
 
         if (phase2Methods.includes('fuzzy') && !suggestion) {
-          suggestion ??= fuzzyMatch(transaction.entity, historicalData);
+          suggestion ??= fuzzyMatch(
+            transaction.entity,
+            historicalData,
+            transaction.amount
+          );
         }
 
         if (phase2Methods.includes('tfidf') && !suggestion) {
-          suggestion ??= categorizeByTFIDF(transaction.entity, historicalData);
+          suggestion ??= categorizeByTFIDF(
+            transaction.entity,
+            historicalData,
+            transaction.amount
+          );
         }
       }
 
