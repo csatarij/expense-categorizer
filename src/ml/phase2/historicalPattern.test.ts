@@ -73,6 +73,39 @@ const mockTransactions: Transaction[] = [
     confidence: 0.9,
     isManuallyEdited: false,
   },
+  {
+    id: '7',
+    date: new Date('2024-01-30'),
+    entity: 'SALARY DIRECT DEPOSIT',
+    amount: 5000,
+    currency: 'USD',
+    category: 'Income',
+    subcategory: 'Salary',
+    confidence: 1,
+    isManuallyEdited: true,
+  },
+  {
+    id: '8',
+    date: new Date('2024-02-28'),
+    entity: 'SALARY DIRECT DEPOSIT',
+    amount: 5000,
+    currency: 'USD',
+    category: 'Income',
+    subcategory: 'Salary',
+    confidence: 1,
+    isManuallyEdited: true,
+  },
+  {
+    id: '9',
+    date: new Date('2024-03-29'),
+    entity: 'SALARY DIRECT DEPOSIT',
+    amount: 5000,
+    currency: 'USD',
+    category: 'Income',
+    subcategory: 'Salary',
+    confidence: 1,
+    isManuallyEdited: true,
+  },
 ];
 
 describe('Phase 2 - Historical Pattern', () => {
@@ -300,7 +333,7 @@ describe('Phase 2 - Historical Pattern', () => {
       const result = categorizeByHistoricalPattern(
         {
           entity: 'NETFLIX MONTHLY',
-          amount: 15.99,
+          amount: -15.99,
         },
         mockTransactions
       );
@@ -314,7 +347,7 @@ describe('Phase 2 - Historical Pattern', () => {
       const result = categorizeByHistoricalPattern(
         {
           entity: 'NETFLIX MONTHLY',
-          amount: 15.99,
+          amount: -15.99,
         },
         [],
         customLearner
@@ -326,7 +359,7 @@ describe('Phase 2 - Historical Pattern', () => {
       const result = categorizeByHistoricalPattern(
         {
           entity: 'NETFLIX MONTHLY',
-          amount: 15.99,
+          amount: -15.99,
         },
         mockTransactions
       );
@@ -337,11 +370,23 @@ describe('Phase 2 - Historical Pattern', () => {
       const result = categorizeByHistoricalPattern(
         {
           entity: 'Unknown',
-          amount: 10,
+          amount: -10,
         },
         []
       );
       expect(result).toBeNull();
+    });
+
+    it('should match positive amounts with Income category only', () => {
+      const result = categorizeByHistoricalPattern(
+        {
+          entity: 'SALARY DIRECT DEPOSIT',
+          amount: 5000,
+        },
+        mockTransactions
+      );
+      expect(result).not.toBeNull();
+      expect(result?.category).toBe('Income');
     });
   });
 

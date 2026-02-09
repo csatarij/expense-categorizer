@@ -28,9 +28,7 @@ describe('App', () => {
 
   it('displays description text', () => {
     render(<App />);
-    expect(
-      screen.getByText(/Upload your bank statements/)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Upload your bank statements/)).toBeInTheDocument();
   });
 
   it('handles file upload and displays transactions with currency', async () => {
@@ -75,7 +73,7 @@ describe('App', () => {
     expect(screen.getByText(/€50\.00/)).toBeInTheDocument();
   });
 
-  it('uses default USD currency when currency column is not detected', async () => {
+  it('uses default CHF currency when currency column is not detected', async () => {
     const user = userEvent.setup();
     const mockParsedFile: ParsedFile = {
       data: [
@@ -111,7 +109,7 @@ describe('App', () => {
       expect(screen.getByText(/1 Transactions/i)).toBeInTheDocument();
     });
 
-    expect(screen.getByText(/\$25\.00/)).toBeInTheDocument();
+    expect(screen.getByText(/CHF\s*25\.00/)).toBeInTheDocument();
   });
 
   it('displays download button when transactions are loaded', async () => {

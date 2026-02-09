@@ -64,10 +64,10 @@ function App() {
           amount = credit - debit;
         }
 
-        // Extract currency (default to USD if not found)
+        // Extract currency (default to CHF if not found)
         const currency = detectedColumns.currency
-          ? cellToString(row[detectedColumns.currency]).toUpperCase() || 'USD'
-          : 'USD';
+          ? cellToString(row[detectedColumns.currency]).toUpperCase() || 'CHF'
+          : 'CHF';
 
         // Parse date
         const dateStr = detectedColumns.date

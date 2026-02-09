@@ -64,6 +64,7 @@ function calculateSimilarity(str1: string, str2: string): number {
 export function fuzzyMatch(
   description: string,
   historicalData: Transaction[],
+  amount?: number,
   threshold: number = SIMILARITY_THRESHOLD
 ): CategorySuggestion | null {
   if (
@@ -76,10 +77,15 @@ export function fuzzyMatch(
 
   const normalizedInput = description.toLowerCase().trim();
 
+  const filteredHistoricalData =
+    (amount ?? 0) > 0
+      ? historicalData.filter((t) => t.category === 'Income')
+      : historicalData.filter((t) => t.category !== 'Income');
+
   let bestMatch: (Transaction & { category: string }) | null = null;
   let bestSimilarity = 0;
 
-  for (const transaction of historicalData) {
+  for (const transaction of filteredHistoricalData) {
     if (!transaction.category) {
       continue;
     }
