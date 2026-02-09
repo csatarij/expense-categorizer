@@ -9,11 +9,13 @@ export interface TransactionTableProps {
     category: string,
     subcategory?: string
   ) => void;
+  onNotesChange?: (id: string, notes: string) => void;
 }
 
 export function TransactionTable({
   transactions,
   onCategoryChange,
+  onNotesChange,
 }: TransactionTableProps): React.JSX.Element {
   const categories = getCategoryNames();
 
@@ -51,6 +53,13 @@ export function TransactionTable({
     [onCategoryChange]
   );
 
+  const handleNotesChange = useCallback(
+    (id: string, value: string) => {
+      onNotesChange?.(id, value);
+    },
+    [onNotesChange]
+  );
+
   if (transactions.length === 0) {
     return (
       <div className="py-8 text-center text-gray-500">
@@ -71,10 +80,10 @@ export function TransactionTable({
               Source
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-              Merchant
+              Entity
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-              Description
+              Notes
             </th>
             <th className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">
               Amount
@@ -112,12 +121,18 @@ export function TransactionTable({
                 )}
               </td>
               <td className="max-w-xs truncate px-4 py-3 text-sm text-gray-900">
-                {transaction.merchant || (
-                  <span className="text-gray-400">—</span>
-                )}
+                {transaction.entity}
               </td>
-              <td className="max-w-xs truncate px-4 py-3 text-sm text-gray-900">
-                {transaction.description}
+              <td className="max-w-xs px-4 py-3 text-sm text-gray-900">
+                <input
+                  type="text"
+                  value={transaction.notes || ''}
+                  onChange={(e) => {
+                    handleNotesChange(transaction.id, e.target.value);
+                  }}
+                  placeholder="Add notes..."
+                  className="focus:border-primary-500 focus:ring-primary-500 block w-full rounded-md border-gray-300 text-sm"
+                />
               </td>
               <td
                 className={`px-4 py-3 text-right text-sm font-medium whitespace-nowrap ${

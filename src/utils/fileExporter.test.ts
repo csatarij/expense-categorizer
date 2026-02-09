@@ -24,7 +24,7 @@ describe('fileExporter', () => {
     {
       id: '1',
       date: new Date('2024-01-01'),
-      description: 'Grocery Store',
+      entity: 'Grocery Store',
       amount: -50.25,
       currency: 'USD',
       category: 'Food',
@@ -35,7 +35,7 @@ describe('fileExporter', () => {
     {
       id: '2',
       date: new Date('2024-01-02'),
-      description: 'Coffee Shop',
+      entity: 'Coffee Shop',
       amount: -5.5,
       currency: 'EUR',
       category: 'Food',
@@ -82,8 +82,8 @@ describe('fileExporter', () => {
       expect(rows).toEqual([
         {
           Date: '2024-01-01',
-          Merchant: '',
-          Description: 'Grocery Store',
+          Entity: 'Grocery Store',
+          Notes: '',
           Amount: -50.25,
           Currency: 'USD',
           Category: 'Food',
@@ -92,8 +92,8 @@ describe('fileExporter', () => {
         },
         {
           Date: '2024-01-02',
-          Merchant: '',
-          Description: 'Coffee Shop',
+          Entity: 'Coffee Shop',
+          Notes: '',
           Amount: -5.5,
           Currency: 'EUR',
           Category: 'Food',
@@ -157,7 +157,7 @@ describe('fileExporter', () => {
         {
           id: '1',
           date: new Date('2024-01-01'),
-          description: 'Old Transaction',
+          entity: 'Old Transaction',
           amount: -10,
           currency: 'USD',
           isManuallyEdited: false,
@@ -168,7 +168,7 @@ describe('fileExporter', () => {
         {
           id: '2',
           date: new Date('2024-01-02'),
-          description: 'New Transaction',
+          entity: 'New Transaction',
           amount: -20,
           currency: 'USD',
           isManuallyEdited: false,
@@ -178,15 +178,15 @@ describe('fileExporter', () => {
       const merged = mergeTransactions(existing, newOnes);
 
       expect(merged).toHaveLength(2);
-      expect(merged[0]?.description).toBe('Old Transaction');
-      expect(merged[1]?.description).toBe('New Transaction');
+      expect(merged[0]?.entity).toBe('Old Transaction');
+      expect(merged[1]?.entity).toBe('New Transaction');
     });
 
     it('should avoid duplicate transactions', () => {
       const transaction: Transaction = {
         id: '1',
         date: new Date('2024-01-01'),
-        description: 'Same Transaction',
+        entity: 'Same Transaction',
         amount: -10,
         currency: 'USD',
         isManuallyEdited: false,
@@ -218,7 +218,7 @@ describe('fileExporter', () => {
         {
           id: '1',
           date: new Date('2024-01-01'),
-          description: 'Old Transaction',
+          entity: 'Old Transaction',
           amount: -10,
           currency: 'USD',
           isManuallyEdited: false,
@@ -229,7 +229,7 @@ describe('fileExporter', () => {
         {
           id: '2',
           date: new Date('2024-01-02'),
-          description: 'New Transaction',
+          entity: 'New Transaction',
           amount: -20,
           currency: 'USD',
           isManuallyEdited: false,
@@ -241,14 +241,14 @@ describe('fileExporter', () => {
       expect(result.merged).toHaveLength(2);
       expect(result.added).toHaveLength(1);
       expect(result.duplicates).toHaveLength(0);
-      expect(result.added[0]?.description).toBe('New Transaction');
+      expect(result.added[0]?.entity).toBe('New Transaction');
     });
 
     it('should identify duplicate transactions', () => {
       const transaction: Transaction = {
         id: '1',
         date: new Date('2024-01-01'),
-        description: 'Same Transaction',
+        entity: 'Same Transaction',
         amount: -10,
         currency: 'USD',
         isManuallyEdited: false,
@@ -262,7 +262,7 @@ describe('fileExporter', () => {
       expect(result.merged).toHaveLength(1);
       expect(result.added).toHaveLength(0);
       expect(result.duplicates).toHaveLength(1);
-      expect(result.duplicates[0]?.description).toBe('Same Transaction');
+      expect(result.duplicates[0]?.entity).toBe('Same Transaction');
     });
 
     it('should handle mixed scenario with both new and duplicate transactions', () => {
@@ -270,7 +270,7 @@ describe('fileExporter', () => {
         {
           id: '1',
           date: new Date('2024-01-01'),
-          description: 'Existing Transaction',
+          entity: 'Existing Transaction',
           amount: -10,
           currency: 'USD',
           isManuallyEdited: false,
@@ -282,7 +282,7 @@ describe('fileExporter', () => {
         {
           id: '2',
           date: new Date('2024-01-01'),
-          description: 'Existing Transaction',
+          entity: 'Existing Transaction',
           amount: -10,
           currency: 'USD',
           isManuallyEdited: false,
@@ -291,7 +291,7 @@ describe('fileExporter', () => {
         {
           id: '3',
           date: new Date('2024-01-02'),
-          description: 'New Transaction 1',
+          entity: 'New Transaction 1',
           amount: -20,
           currency: 'USD',
           isManuallyEdited: false,
@@ -300,7 +300,7 @@ describe('fileExporter', () => {
         {
           id: '4',
           date: new Date('2024-01-03'),
-          description: 'New Transaction 2',
+          entity: 'New Transaction 2',
           amount: -30,
           currency: 'EUR',
           isManuallyEdited: false,
@@ -312,11 +312,11 @@ describe('fileExporter', () => {
       expect(result.merged).toHaveLength(3); // 1 existing + 2 new
       expect(result.added).toHaveLength(2);
       expect(result.duplicates).toHaveLength(1);
-      expect(result.added.map((t) => t.description)).toEqual([
+      expect(result.added.map((t) => t.entity)).toEqual([
         'New Transaction 1',
         'New Transaction 2',
       ]);
-      expect(result.duplicates[0]?.description).toBe('Existing Transaction');
+      expect(result.duplicates[0]?.entity).toBe('Existing Transaction');
     });
 
     it('should handle empty existing array', () => {
@@ -324,7 +324,7 @@ describe('fileExporter', () => {
         {
           id: '1',
           date: new Date('2024-01-01'),
-          description: 'Transaction',
+          entity: 'Transaction',
           amount: -10,
           currency: 'USD',
           isManuallyEdited: false,
@@ -343,7 +343,7 @@ describe('fileExporter', () => {
         {
           id: '1',
           date: new Date('2024-01-01'),
-          description: 'Transaction',
+          entity: 'Transaction',
           amount: -10,
           currency: 'USD',
           isManuallyEdited: false,
@@ -370,7 +370,7 @@ describe('fileExporter', () => {
         {
           id: '1',
           date: new Date('2024-01-01'),
-          description: 'Coffee',
+          entity: 'Coffee',
           amount: -5,
           currency: 'USD',
           isManuallyEdited: false,
@@ -382,7 +382,7 @@ describe('fileExporter', () => {
         {
           id: '2',
           date: new Date('2024-01-01'),
-          description: 'Coffee',
+          entity: 'Coffee',
           amount: -5,
           currency: 'USD',
           isManuallyEdited: false,
@@ -391,7 +391,7 @@ describe('fileExporter', () => {
         {
           id: '3',
           date: new Date('2024-01-01'),
-          description: 'Coffee',
+          entity: 'Coffee',
           amount: -6,
           currency: 'USD',
           isManuallyEdited: false,
@@ -400,7 +400,7 @@ describe('fileExporter', () => {
         {
           id: '4',
           date: new Date('2024-01-01'),
-          description: 'Coffee',
+          entity: 'Coffee',
           amount: -5,
           currency: 'EUR',
           isManuallyEdited: false,
@@ -409,7 +409,7 @@ describe('fileExporter', () => {
         {
           id: '5',
           date: new Date('2024-01-01'),
-          description: 'Tea',
+          entity: 'Tea',
           amount: -5,
           currency: 'USD',
           isManuallyEdited: false,
@@ -418,7 +418,7 @@ describe('fileExporter', () => {
         {
           id: '6',
           date: new Date('2024-01-02'),
-          description: 'Coffee',
+          entity: 'Coffee',
           amount: -5,
           currency: 'USD',
           isManuallyEdited: false,
@@ -437,7 +437,7 @@ describe('fileExporter', () => {
         {
           id: '1',
           date: new Date('2024-01-01'),
-          description: 'First',
+          entity: 'First',
           amount: -10,
           currency: 'USD',
           isManuallyEdited: false,
@@ -448,7 +448,7 @@ describe('fileExporter', () => {
         {
           id: '2',
           date: new Date('2024-01-02'),
-          description: 'Second',
+          entity: 'Second',
           amount: -20,
           currency: 'USD',
           isManuallyEdited: false,
@@ -456,7 +456,7 @@ describe('fileExporter', () => {
         {
           id: '3',
           date: new Date('2024-01-03'),
-          description: 'Third',
+          entity: 'Third',
           amount: -30,
           currency: 'USD',
           isManuallyEdited: false,
@@ -465,9 +465,9 @@ describe('fileExporter', () => {
 
       const result = mergeTransactionsWithMetadata(existing, newOnes);
 
-      expect(result.merged[0]?.description).toBe('First');
-      expect(result.merged[1]?.description).toBe('Second');
-      expect(result.merged[2]?.description).toBe('Third');
+      expect(result.merged[0]?.entity).toBe('First');
+      expect(result.merged[1]?.entity).toBe('Second');
+      expect(result.merged[2]?.entity).toBe('Third');
     });
   });
 });

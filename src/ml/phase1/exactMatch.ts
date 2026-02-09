@@ -87,7 +87,7 @@ export function exactMatch(
         return false;
       }
       const normalizedHistorical = normalizeDescription(
-        transaction.description
+        transaction.entity
       );
       return normalizedHistorical === normalizedInput;
     }

@@ -47,7 +47,7 @@ describe('App', () => {
       headers: ['Date', 'Description', 'Amount', 'Currency'],
       detectedColumns: {
         date: 'Date',
-        description: 'Description',
+        entity: 'Description',
         amount: 'Amount',
         currency: 'Currency',
       },
@@ -88,7 +88,7 @@ describe('App', () => {
       headers: ['Date', 'Description', 'Amount'],
       detectedColumns: {
         date: 'Date',
-        description: 'Description',
+        entity: 'Description',
         amount: 'Amount',
       },
       fileName: 'test.csv',
@@ -127,7 +127,7 @@ describe('App', () => {
       headers: ['Date', 'Description', 'Amount'],
       detectedColumns: {
         date: 'Date',
-        description: 'Description',
+        entity: 'Description',
         amount: 'Amount',
       },
       fileName: 'test.csv',
@@ -183,7 +183,7 @@ describe('App', () => {
       headers: ['Date', 'Description', 'Amount'],
       detectedColumns: {
         date: 'Date',
-        description: 'Description',
+        entity: 'Description',
         amount: 'Amount',
       },
       fileName: 'test.csv',

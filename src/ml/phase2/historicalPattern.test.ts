@@ -10,7 +10,7 @@ const mockTransactions: Transaction[] = [
   {
     id: '1',
     date: new Date('2024-01-15'),
-    description: 'STARBUCKS COFFEE SHOP',
+    entity: 'STARBUCKS COFFEE SHOP',
     amount: -5.5,
     currency: 'USD',
     category: 'Food & Dining',
@@ -21,7 +21,7 @@ const mockTransactions: Transaction[] = [
   {
     id: '2',
     date: new Date('2024-01-16'),
-    description: 'STARBUCKS COFFEE SHOP',
+    entity: 'STARBUCKS COFFEE SHOP',
     amount: -6.0,
     currency: 'USD',
     category: 'Food & Dining',
@@ -32,7 +32,7 @@ const mockTransactions: Transaction[] = [
   {
     id: '3',
     date: new Date('2024-01-17'),
-    description: 'STARBUCKS COFFEE SHOP',
+    entity: 'STARBUCKS COFFEE SHOP',
     amount: -5.8,
     currency: 'USD',
     category: 'Food & Dining',
@@ -43,7 +43,7 @@ const mockTransactions: Transaction[] = [
   {
     id: '4',
     date: new Date('2024-01-01'),
-    description: 'NETFLIX MONTHLY',
+    entity: 'NETFLIX MONTHLY',
     amount: -15.99,
     currency: 'USD',
     category: 'Entertainment',
@@ -54,7 +54,7 @@ const mockTransactions: Transaction[] = [
   {
     id: '5',
     date: new Date('2024-02-01'),
-    description: 'NETFLIX MONTHLY',
+    entity: 'NETFLIX MONTHLY',
     amount: -15.99,
     currency: 'USD',
     category: 'Entertainment',
@@ -65,7 +65,7 @@ const mockTransactions: Transaction[] = [
   {
     id: '6',
     date: new Date('2024-03-01'),
-    description: 'NETFLIX MONTHLY',
+    entity: 'NETFLIX MONTHLY',
     amount: -15.99,
     currency: 'USD',
     category: 'Entertainment',
@@ -111,7 +111,7 @@ describe('Phase 2 - Historical Pattern', () => {
           {
             id: '7',
             date: new Date('2024-01-18'),
-            description: 'Uncategorized Transaction',
+            entity: 'Uncategorized Transaction',
             amount: -10.0,
             currency: 'USD',
             isManuallyEdited: false,
@@ -125,7 +125,7 @@ describe('Phase 2 - Historical Pattern', () => {
     describe('categorizeByPattern', () => {
       it('should categorize by merchant pattern', () => {
         const result = learner.categorizeByPattern({
-          description: 'STARBUCKS COFFEE SHOP',
+          entity: 'STARBUCKS COFFEE SHOP',
           amount: 5.5,
         });
         expect(result).not.toBeNull();
@@ -135,7 +135,7 @@ describe('Phase 2 - Historical Pattern', () => {
 
       it('should categorize by recurring pattern', () => {
         const result = learner.categorizeByPattern({
-          description: 'NETFLIX MONTHLY',
+          entity: 'NETFLIX MONTHLY',
           amount: 15.99,
         });
         expect(result).not.toBeNull();
@@ -144,7 +144,7 @@ describe('Phase 2 - Historical Pattern', () => {
 
       it('should categorize by amount pattern when merchant / recurring not found', () => {
         const result = learner.categorizeByPattern({
-          description: 'Some description',
+          entity: 'Some description',
           amount: -15.0,
           date: new Date('2024-04-01'),
         });
@@ -154,7 +154,7 @@ describe('Phase 2 - Historical Pattern', () => {
 
       it('should return null for unknown patterns', () => {
         const result = learner.categorizeByPattern({
-          description: 'Completely Unknown Merchant',
+          entity: 'Completely Unknown Merchant',
           amount: 999.99,
         });
         expect(result).toBeNull();
@@ -162,7 +162,7 @@ describe('Phase 2 - Historical Pattern', () => {
 
       it('should include subcategory when available', () => {
         const result = learner.categorizeByPattern({
-          description: 'starbucks coffee shop',
+          entity: 'starbucks coffee shop',
           amount: 5.5,
         });
         expect(result).not.toBeNull();
@@ -171,7 +171,7 @@ describe('Phase 2 - Historical Pattern', () => {
 
       it('should return confidence score', () => {
         const result = learner.categorizeByPattern({
-          description: 'starbucks coffee shop',
+          entity: 'starbucks coffee shop',
           amount: 5.5,
         });
         expect(result).not.toBeNull();
@@ -181,7 +181,7 @@ describe('Phase 2 - Historical Pattern', () => {
 
       it('should increase confidence with more occurrences', () => {
         const someOccurrences = learner.categorizeByPattern({
-          description: 'starbucks coffee shop',
+          entity: 'starbucks coffee shop',
           amount: 5.5,
         });
         expect(someOccurrences).not.toBeNull();
@@ -191,7 +191,7 @@ describe('Phase 2 - Historical Pattern', () => {
 
       it('should include reason in suggestion', () => {
         const result = learner.categorizeByPattern({
-          description: 'netflix monthly',
+          entity: 'netflix monthly',
           amount: 15.99,
         });
         expect(result).not.toBeNull();
@@ -299,7 +299,7 @@ describe('Phase 2 - Historical Pattern', () => {
     it('should categorize using historical data', () => {
       const result = categorizeByHistoricalPattern(
         {
-          description: 'NETFLIX MONTHLY',
+          entity: 'NETFLIX MONTHLY',
           amount: 15.99,
         },
         mockTransactions
@@ -313,7 +313,7 @@ describe('Phase 2 - Historical Pattern', () => {
       customLearner.learnFromTransactions(mockTransactions);
       const result = categorizeByHistoricalPattern(
         {
-          description: 'NETFLIX MONTHLY',
+          entity: 'NETFLIX MONTHLY',
           amount: 15.99,
         },
         [],
@@ -325,7 +325,7 @@ describe('Phase 2 - Historical Pattern', () => {
     it('should create new learner when none provided', () => {
       const result = categorizeByHistoricalPattern(
         {
-          description: 'NETFLIX MONTHLY',
+          entity: 'NETFLIX MONTHLY',
           amount: 15.99,
         },
         mockTransactions
@@ -336,7 +336,7 @@ describe('Phase 2 - Historical Pattern', () => {
     it('should return null when no historical data', () => {
       const result = categorizeByHistoricalPattern(
         {
-          description: 'Unknown',
+          entity: 'Unknown',
           amount: 10,
         },
         []

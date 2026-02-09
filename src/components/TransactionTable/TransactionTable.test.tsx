@@ -14,7 +14,7 @@ function createMockTransaction(
   return {
     id: 'test-1',
     date: new Date('2024-01-15'),
-    description: 'Test Transaction',
+    entity: 'Test Transaction',
     amount: -50.0,
     currency: 'USD',
     isManuallyEdited: false,
@@ -62,7 +62,7 @@ describe('TransactionTable', () => {
 
       expect(screen.getByRole('table')).toBeInTheDocument();
       expect(screen.getByText('Date')).toBeInTheDocument();
-      expect(screen.getByText('Description')).toBeInTheDocument();
+      expect(screen.getByText('Entity')).toBeInTheDocument();
       expect(screen.getByText('Amount')).toBeInTheDocument();
       expect(screen.getByText('Category')).toBeInTheDocument();
       expect(screen.getByText('Subcategory')).toBeInTheDocument();
@@ -108,7 +108,7 @@ describe('TransactionTable', () => {
   describe('description display', () => {
     it('should display transaction description', () => {
       const transactions = [
-        createMockTransaction({ description: 'Grocery Store Purchase' }),
+        createMockTransaction({ entity: 'Grocery Store Purchase' }),
       ];
       render(<TransactionTable transactions={transactions} />);
 
@@ -118,9 +118,7 @@ describe('TransactionTable', () => {
     it('should display long descriptions (truncated via CSS)', () => {
       const longDescription =
         'A very long transaction description that should be truncated by CSS';
-      const transactions = [
-        createMockTransaction({ description: longDescription }),
-      ];
+      const transactions = [createMockTransaction({ entity: longDescription })];
       render(<TransactionTable transactions={transactions} />);
 
       expect(screen.getByText(longDescription)).toBeInTheDocument();
@@ -321,7 +319,7 @@ describe('TransactionTable', () => {
       const transactions = [createMockTransaction()];
       render(<TransactionTable transactions={transactions} />);
 
-      expect(screen.getAllByText('—')).toHaveLength(2);
+      expect(screen.getAllByText('—')).toHaveLength(1);
     });
 
     it('should round confidence to nearest integer', () => {
@@ -353,19 +351,19 @@ describe('TransactionTable', () => {
       const transactions = [
         createMockTransaction({
           id: '1',
-          description: 'Coffee Shop Purchase',
+          entity: 'Coffee Shop Purchase',
           amount: -5.5,
           category: 'Food & Dining',
         }),
         createMockTransaction({
           id: '2',
-          description: 'Monthly Paycheck',
+          entity: 'Monthly Paycheck',
           amount: 3000,
           category: 'Income',
         }),
         createMockTransaction({
           id: '3',
-          description: 'Electric Bill Payment',
+          entity: 'Electric Bill Payment',
           amount: -150,
           category: 'Bills & Utilities',
         }),
@@ -381,8 +379,8 @@ describe('TransactionTable', () => {
       const user = userEvent.setup();
       const onCategoryChange = vi.fn();
       const transactions = [
-        createMockTransaction({ id: 'tx-1', description: 'First' }),
-        createMockTransaction({ id: 'tx-2', description: 'Second' }),
+        createMockTransaction({ id: 'tx-1', entity: 'First' }),
+        createMockTransaction({ id: 'tx-2', entity: 'Second' }),
       ];
       render(
         <TransactionTable
@@ -409,13 +407,13 @@ describe('TransactionTable', () => {
       const transactions = [createMockTransaction()];
       render(<TransactionTable transactions={transactions} />);
 
-      expect(screen.getAllByText('—')).toHaveLength(2);
+      expect(screen.getAllByText('—')).toHaveLength(1);
       const categorySelect = getCategorySelect();
       expect(categorySelect).toHaveValue('');
     });
 
     it('should handle empty description', () => {
-      const transactions = [createMockTransaction({ description: '' })];
+      const transactions = [createMockTransaction({ entity: '' })];
       render(<TransactionTable transactions={transactions} />);
 
       // Table should still render

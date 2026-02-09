@@ -84,7 +84,7 @@ export function fuzzyMatch(
       continue;
     }
 
-    const normalizedHistory = transaction.description.toLowerCase().trim();
+    const normalizedHistory = transaction.entity.toLowerCase().trim();
     const similarity = calculateSimilarity(normalizedInput, normalizedHistory);
 
     if (similarity > bestSimilarity && similarity >= MIN_SIMILARITY_FOR_MATCH) {
@@ -104,7 +104,7 @@ export function fuzzyMatch(
   const suggestion: CategorySuggestion = {
     category: bestMatch.category,
     confidence,
-    reason: `Fuzzy match found: "${description}" is similar to "${bestMatch.description}" with ${String(confidence)}% similarity`,
+    reason: `Fuzzy match found: "${description}" is similar to "${bestMatch.entity}" with ${String(confidence)}% similarity`,
     method: 'fuzzy-match',
   };
 
@@ -139,7 +139,7 @@ export function findSimilarTransactions(
       ...transaction,
       similarity: calculateSimilarity(
         normalizedInput,
-        transaction.description.toLowerCase().trim()
+        transaction.entity.toLowerCase().trim()
       ),
     }))
     .filter((t) => t.similarity >= MIN_SIMILARITY_FOR_MATCH)

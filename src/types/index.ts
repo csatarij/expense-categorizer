@@ -27,10 +27,10 @@ export interface TransactionMetadata {
 export interface Transaction {
   id: string;
   date: Date;
-  description: string;
+  entity: string;
+  notes?: string;
   amount: number;
   currency: string;
-  merchant?: string;
   category?: string;
   subcategory?: string;
   originalCategory?: string;
@@ -60,8 +60,8 @@ export type CategoryTaxonomy = Record<string, string[]>;
  */
 export interface ColumnMapping {
   date?: string;
-  description?: string;
-  merchant?: string;
+  entity?: string;
+  notes?: string;
   amount?: string;
   currency?: string;
   category?: string;
@@ -117,7 +117,8 @@ export interface AppState {
 export interface Expense {
   id: string;
   date: Date;
-  description: string;
+  entity: string;
+  notes?: string;
   amount: number;
   category?: string;
   confidence?: number;

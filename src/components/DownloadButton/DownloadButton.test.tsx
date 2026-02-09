@@ -14,7 +14,7 @@ describe('DownloadButton', () => {
     {
       id: '1',
       date: new Date('2024-01-01'),
-      description: 'Test Transaction',
+      entity: 'Test Transaction',
       amount: -50,
       currency: 'USD',
       isManuallyEdited: false,

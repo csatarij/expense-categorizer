@@ -9,7 +9,7 @@ const mockTransactions: Transaction[] = [
   {
     id: '1',
     date: new Date('2024-01-15'),
-    description: 'Test Transaction 1',
+    entity: 'Test Transaction 1',
     amount: -50,
     currency: 'USD',
     category: 'Food & Dining',
@@ -20,7 +20,7 @@ const mockTransactions: Transaction[] = [
   {
     id: '2',
     date: new Date('2024-01-16'),
-    description: 'Test Transaction 2',
+    entity: 'Test Transaction 2',
     amount: 100,
     currency: 'USD',
     isManuallyEdited: false,

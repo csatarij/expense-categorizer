@@ -50,6 +50,10 @@ npm run type-check    # TypeScript checking
 
 ## Quality Standards
 
-- **Pre-commit Checks**: All commits MUST pass linting before being committed. Run `npm run lint` to verify code quality.
-- **Code Coverage**: Test coverage must be maintained at or above 80% per file. The CI/CD pipeline will fail if coverage drops below this threshold. Run `npm run test:coverage` to verify coverage locally.
+- **Pre-commit & Pre-PR Checks**: All commits and PRs MUST pass the following checks before being created or pushed to GitHub to avoid CI/CD failures:
+  - Run `npm run lint` to verify code quality
+  - Run `npm run test:unit` to verify unit tests pass
+  - Run `npm run test:e2e` to verify E2E tests pass
+  - Run `npm run test:coverage` to verify coverage meets minimum thresholds
+- **Code Coverage**: Test coverage must be maintained at or above 80% per file. The CI/CD pipeline will fail if coverage drops below this threshold.
   - **Known Issue**: The vitest/v8 coverage reporter shows duplicate file entries on Windows, which affects aggregate coverage calculations. Individual file coverage (non-zero entries) should be above 80% for statements, lines, and functions. Branch coverage target is 70% due to this reporting issue.

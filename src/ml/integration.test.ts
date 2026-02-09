@@ -26,7 +26,7 @@ const mockTransactions: Transaction[] = [
   {
     id: '1',
     date: new Date('2024-01-15'),
-    description: 'STARBUCKS #123',
+    entity: 'STARBUCKS #123',
     amount: -5.5,
     currency: 'USD',
     category: 'Food & Dining',
@@ -37,7 +37,7 @@ const mockTransactions: Transaction[] = [
   {
     id: '2',
     date: new Date('2024-01-16'),
-    description: 'STARBUCKS #123',
+    entity: 'STARBUCKS #123',
     amount: -5.5,
     currency: 'USD',
     category: 'Food & Dining',
@@ -48,7 +48,7 @@ const mockTransactions: Transaction[] = [
   {
     id: '3',
     date: new Date('2024-01-17'),
-    description: 'STARBUCKS #123',
+    entity: 'STARBUCKS #123',
     amount: -5.5,
     currency: 'USD',
     category: 'Food & Dining',
@@ -126,7 +126,7 @@ describe('Categorization Integration Tests', () => {
 
     it('should categorize using historical patterns', () => {
       const result = categorizeByHistoricalPattern(
-        { description: 'STARBUCKS #123', amount: 6.0, date: new Date() },
+        { entity: 'STARBUCKS #123', amount: 6.0, date: new Date() },
         mockTransactions
       );
       expect(result).not.toBeNull();

@@ -126,7 +126,7 @@ function tokenize(text: string): string[] {
 function buildCorpus(transactions: Transaction[]): string[] {
   return transactions
     .filter((t) => t.category)
-    .map((t) => normalizeText(t.description));
+    .map((t) => normalizeText(t.entity));
 }
 
 function computeDocumentFrequency(corpus: string[]): Map<string, number> {
@@ -281,7 +281,7 @@ export function categorizeByTFIDF(
 
   const similarities: SimilarityResult[] = categorizedTransactions.map(
     (transaction) => {
-      const normalizedTransaction = normalizeText(transaction.description);
+      const normalizedTransaction = normalizeText(transaction.entity);
       const transactionVector = buildTFIDFVector(
         normalizedTransaction,
         corpus,
@@ -315,7 +315,7 @@ export function categorizeByTFIDF(
   const suggestion: CategorySuggestion = {
     category: bestMatch.transaction.category,
     confidence,
-    reason: `TF-IDF similarity match found: "${description}" is similar to "${bestMatch.transaction.description}" with ${bestMatch.similarity.toFixed(3)} similarity`,
+    reason: `TF-IDF similarity match found: "${description}" is similar to "${bestMatch.transaction.entity}" with ${bestMatch.similarity.toFixed(3)} similarity`,
     method: 'tfidf-similarity',
   };
 
@@ -358,7 +358,7 @@ export function findSimilarByTFIDF(
 
   const similarities: SimilarityResult[] = categorizedTransactions.map(
     (transaction) => {
-      const normalizedTransaction = normalizeText(transaction.description);
+      const normalizedTransaction = normalizeText(transaction.entity);
       const transactionVector = buildTFIDFVector(
         normalizedTransaction,
         corpus,
