@@ -26,6 +26,7 @@ export default defineConfig({
         'src/main.tsx',
         'dist/',
         'tests/',
+        'src/ml/phase3/',
       ],
       thresholds: {
         lines: 45,

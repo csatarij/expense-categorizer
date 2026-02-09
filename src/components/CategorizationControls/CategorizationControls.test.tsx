@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 import { render, screen, within } from '@testing-library/react';
-import { describe, it, vi, beforeEach, expect } from 'vitest';
+import { describe, it, vi, beforeEach, expect, afterEach } from 'vitest';
 import userEvent from '@testing-library/user-event';
 import { CategorizationControls } from './CategorizationControls';
 import type { Transaction } from '@/types';
@@ -30,6 +30,10 @@ const mockTransactions: Transaction[] = [
 describe('CategorizationControls', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('should render categorization controls section', () => {
@@ -307,5 +311,25 @@ describe('CategorizationControls', () => {
         /Note: Categorization will be applied to uncategorized transactions only/i
       )
     ).toBeInTheDocument();
+  });
+
+  it('should not categorize if no phases selected', async () => {
+    const user = userEvent.setup();
+    const onCategorize = vi.fn();
+
+    render(
+      <CategorizationControls
+        transactions={mockTransactions}
+        onCategorize={onCategorize}
+      />
+    );
+
+    const categorizeButton = screen.getByRole('button', {
+      name: 'Categorize Now',
+    });
+
+    await user.click(categorizeButton);
+
+    expect(onCategorize).not.toHaveBeenCalled();
   });
 });
