@@ -20,8 +20,27 @@ export const COLUMN_PATTERNS: Record<keyof ColumnMapping, string[]> = {
     'txn date',
     'posting date',
   ],
-  description: ['description', 'details', 'memo', 'narrative', 'transaction'],
-  merchant: ['merchant', 'payee', 'vendor', 'store', 'retailer', 'name'],
+  entity: [
+    'entity',
+    'description',
+    'details',
+    'merchant',
+    'payee',
+    'vendor',
+    'store',
+    'retailer',
+    'memo',
+    'transaction',
+    'name',
+  ],
+  notes: [
+    'notes',
+    'note',
+    'subject',
+    'comment',
+    'remarks',
+    'custom description',
+  ],
   amount: ['amount', 'transaction amount', 'value', 'total', 'sum'],
   currency: ['currency', 'curr', 'ccy', 'currency code'],
   debit: ['debit', 'withdrawal', 'charge', 'debit amount', 'money out'],
@@ -402,8 +421,8 @@ export function detectColumns(
       }
     }
 
-    // Try to detect description by finding longest string column
-    if (!mapping.description) {
+    // Try to detect entity by finding longest string column
+    if (!mapping.entity) {
       let bestColumn: {
         index: number;
         header: string;
@@ -436,8 +455,8 @@ export function detectColumns(
       }
 
       if (bestColumn && bestColumn.avgLength > 5) {
-        mapping.description = bestColumn.header;
-        confidence.description = 40;
+        mapping.entity = bestColumn.header;
+        confidence.entity = 40;
         usedIndices.add(bestColumn.index);
       }
     }

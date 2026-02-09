@@ -14,7 +14,7 @@ function createMockTransaction(
   return {
     id: 'test-1',
     date: new Date('2024-01-15'),
-    description: 'Test Transaction',
+    entity: 'Test Transaction',
     amount: -50.0,
     currency: 'USD',
     isManuallyEdited: false,
@@ -108,7 +108,7 @@ describe('TransactionTable', () => {
   describe('description display', () => {
     it('should display transaction description', () => {
       const transactions = [
-        createMockTransaction({ description: 'Grocery Store Purchase' }),
+        createMockTransaction({ entity: 'Grocery Store Purchase' }),
       ];
       render(<TransactionTable transactions={transactions} />);
 
@@ -119,7 +119,7 @@ describe('TransactionTable', () => {
       const longDescription =
         'A very long transaction description that should be truncated by CSS';
       const transactions = [
-        createMockTransaction({ description: longDescription }),
+        createMockTransaction({ entity: longDescription }),
       ];
       render(<TransactionTable transactions={transactions} />);
 
@@ -353,19 +353,19 @@ describe('TransactionTable', () => {
       const transactions = [
         createMockTransaction({
           id: '1',
-          description: 'Coffee Shop Purchase',
+          entity: 'Coffee Shop Purchase',
           amount: -5.5,
           category: 'Food & Dining',
         }),
         createMockTransaction({
           id: '2',
-          description: 'Monthly Paycheck',
+          entity: 'Monthly Paycheck',
           amount: 3000,
           category: 'Income',
         }),
         createMockTransaction({
           id: '3',
-          description: 'Electric Bill Payment',
+          entity: 'Electric Bill Payment',
           amount: -150,
           category: 'Bills & Utilities',
         }),
@@ -381,8 +381,8 @@ describe('TransactionTable', () => {
       const user = userEvent.setup();
       const onCategoryChange = vi.fn();
       const transactions = [
-        createMockTransaction({ id: 'tx-1', description: 'First' }),
-        createMockTransaction({ id: 'tx-2', description: 'Second' }),
+        createMockTransaction({ id: 'tx-1', entity: 'First' }),
+        createMockTransaction({ id: 'tx-2', entity: 'Second' }),
       ];
       render(
         <TransactionTable
@@ -415,7 +415,7 @@ describe('TransactionTable', () => {
     });
 
     it('should handle empty description', () => {
-      const transactions = [createMockTransaction({ description: '' })];
+      const transactions = [createMockTransaction({ entity: '' })];
       render(<TransactionTable transactions={transactions} />);
 
       // Table should still render

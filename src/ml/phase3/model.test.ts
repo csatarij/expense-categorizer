@@ -22,7 +22,7 @@ describe('Phase 3 ML Model', () => {
     return {
       id: crypto.randomUUID(),
       date: new Date('2024-01-15'),
-      description: 'Test Transaction',
+      entity: 'Test Transaction',
       amount: 100,
       currency: 'USD',
       isManuallyEdited: false,
@@ -55,7 +55,7 @@ describe('Phase 3 ML Model', () => {
 
     it('should require at least 2 categories', () => {
       const transactions: Transaction[] = [
-        createTransaction({ description: 'Test', category: 'Food' }),
+        createTransaction({ entity: 'Test', category: 'Food' }),
       ];
 
       return expect(trainModel(transactions, { epochs: 1 })).rejects.toThrow(
@@ -67,7 +67,7 @@ describe('Phase 3 ML Model', () => {
   describe('trainModel', () => {
     it('should throw error with insufficient data', () => {
       const transactions: Transaction[] = [
-        createTransaction({ description: 'Test', category: 'Food' }),
+        createTransaction({ entity: 'Test', category: 'Food' }),
       ];
 
       return expect(trainModel(transactions, { epochs: 1 })).rejects.toThrow(
@@ -77,7 +77,7 @@ describe('Phase 3 ML Model', () => {
 
     it('should throw error with no categories', () => {
       const transactions: Transaction[] = [
-        createTransaction({ description: 'Test' }),
+        createTransaction({ entity: 'Test' }),
       ];
 
       return expect(trainModel(transactions, { epochs: 1 })).rejects.toThrow(
@@ -91,23 +91,23 @@ describe('Phase 3 ML Model', () => {
         trainModel(
           [
             createTransaction({
-              description: 'STARBUCKS COFFEE',
+              entity: 'STARBUCKS COFFEE',
               category: 'Food',
             }),
             createTransaction({
-              description: 'WHOLE FOODS MARKET',
+              entity: 'WHOLE FOODS MARKET',
               category: 'Groceries',
             }),
             createTransaction({
-              description: 'AMAZON PURCHASE ONLINE',
+              entity: 'AMAZON PURCHASE ONLINE',
               category: 'Shopping',
             }),
             createTransaction({
-              description: 'NETFLIX STREAMING',
+              entity: 'NETFLIX STREAMING',
               category: 'Entertainment',
             }),
             createTransaction({
-              description: 'UBER RIDE',
+              entity: 'UBER RIDE',
               category: 'Transportation',
             }),
           ],
@@ -125,9 +125,9 @@ describe('Phase 3 ML Model', () => {
       () =>
         trainModel(
           [
-            createTransaction({ description: 'ITEM ONE', category: 'Food' }),
+            createTransaction({ entity: 'ITEM ONE', category: 'Food' }),
             createTransaction({
-              description: 'ITEM TWO',
+              entity: 'ITEM TWO',
               category: 'Shopping',
             }),
           ],
@@ -143,9 +143,9 @@ describe('Phase 3 ML Model', () => {
       () =>
         trainModel(
           [
-            createTransaction({ description: 'ITEM ONE', category: 'Food' }),
+            createTransaction({ entity: 'ITEM ONE', category: 'Food' }),
             createTransaction({
-              description: 'ITEM TWO',
+              entity: 'ITEM TWO',
               category: 'Shopping',
             }),
           ],
@@ -162,23 +162,23 @@ describe('Phase 3 ML Model', () => {
       await trainModel(
         [
           createTransaction({
-            description: 'STARBUCKS COFFEE',
+            entity: 'STARBUCKS COFFEE',
             category: 'Food',
           }),
           createTransaction({
-            description: 'WHOLE FOODS MARKET',
+            entity: 'WHOLE FOODS MARKET',
             category: 'Groceries',
           }),
           createTransaction({
-            description: 'AMAZON PURCHASE ONLINE',
+            entity: 'AMAZON PURCHASE ONLINE',
             category: 'Shopping',
           }),
           createTransaction({
-            description: 'NETFLIX STREAMING',
+            entity: 'NETFLIX STREAMING',
             category: 'Entertainment',
           }),
           createTransaction({
-            description: 'UBER RIDE',
+            entity: 'UBER RIDE',
             category: 'Transportation',
           }),
         ],
@@ -222,8 +222,8 @@ describe('Phase 3 ML Model', () => {
     it('should return true after training', async () => {
       await trainModel(
         [
-          createTransaction({ description: 'ITEM ONE', category: 'Food' }),
-          createTransaction({ description: 'ITEM TWO', category: 'Shopping' }),
+          createTransaction({ entity: 'ITEM ONE', category: 'Food' }),
+          createTransaction({ entity: 'ITEM TWO', category: 'Shopping' }),
         ],
         { epochs: 1 }
       );
@@ -237,9 +237,9 @@ describe('Phase 3 ML Model', () => {
       () =>
         trainModel(
           [
-            createTransaction({ description: 'ITEM ONE', category: 'Food' }),
+            createTransaction({ entity: 'ITEM ONE', category: 'Food' }),
             createTransaction({
-              description: 'ITEM TWO',
+              entity: 'ITEM TWO',
               category: 'Shopping',
             }),
           ],
@@ -259,9 +259,9 @@ describe('Phase 3 ML Model', () => {
       () =>
         trainModel(
           [
-            createTransaction({ description: 'ITEM ONE', category: 'Food' }),
+            createTransaction({ entity: 'ITEM ONE', category: 'Food' }),
             createTransaction({
-              description: 'ITEM TWO',
+              entity: 'ITEM TWO',
               category: 'Shopping',
             }),
           ],
@@ -287,9 +287,9 @@ describe('Phase 3 ML Model', () => {
       () =>
         trainModel(
           [
-            createTransaction({ description: 'ITEM ONE', category: 'Food' }),
+            createTransaction({ entity: 'ITEM ONE', category: 'Food' }),
             createTransaction({
-              description: 'ITEM TWO',
+              entity: 'ITEM TWO',
               category: 'Shopping',
             }),
           ],
@@ -308,9 +308,9 @@ describe('Phase 3 ML Model', () => {
       () =>
         trainModel(
           [
-            createTransaction({ description: 'ITEM ONE', category: 'Food' }),
+            createTransaction({ entity: 'ITEM ONE', category: 'Food' }),
             createTransaction({
-              description: 'ITEM TWO',
+              entity: 'ITEM TWO',
               category: 'Shopping',
             }),
           ],

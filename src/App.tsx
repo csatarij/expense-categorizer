@@ -81,14 +81,15 @@ function App() {
           row[detectedColumns.subcategory ?? '']
         );
 
-        const merchant = detectedColumns.merchant
-          ? cellToString(row[detectedColumns.merchant])
+        const notes = detectedColumns.notes
+          ? cellToString(row[detectedColumns.notes])
           : undefined;
 
         const baseTransaction: {
           id: string;
           date: Date;
-          description: string;
+          entity: string;
+          notes?: string;
           amount: number;
           currency: string;
           category?: string;
@@ -100,8 +101,8 @@ function App() {
         } = {
           id: `${fileId}-${String(index)}`,
           date: isNaN(date.getTime()) ? new Date() : date,
-          description: detectedColumns.description
-            ? cellToString(row[detectedColumns.description])
+          entity: detectedColumns.entity
+            ? cellToString(row[detectedColumns.entity])
             : '',
           amount,
           currency,
@@ -115,8 +116,8 @@ function App() {
           },
         };
 
-        if (merchant) {
-          (baseTransaction as Transaction).merchant = merchant;
+        if (notes) {
+          (baseTransaction as Transaction).notes = notes;
         }
 
         return {
@@ -182,6 +183,19 @@ function App() {
               category,
               ...(subcategory !== undefined ? { subcategory } : {}),
               isManuallyEdited: true,
+            }
+          : t
+      )
+    );
+  };
+
+  const handleNotesChange = (id: string, notes: string) => {
+    setTransactions((prev) =>
+      prev.map((t) =>
+        t.id === id
+          ? {
+              ...t,
+              notes,
             }
           : t
       )
@@ -281,6 +295,7 @@ function App() {
               <TransactionTable
                 transactions={transactions}
                 onCategoryChange={handleCategoryChange}
+                onNotesChange={handleNotesChange}
               />
             </div>
           )}

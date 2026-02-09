@@ -193,7 +193,7 @@ describe('columnDetector', () => {
   describe('COLUMN_PATTERNS', () => {
     it('should have patterns for all column types', () => {
       expect(COLUMN_PATTERNS.date).toBeDefined();
-      expect(COLUMN_PATTERNS.description).toBeDefined();
+      expect(COLUMN_PATTERNS.entity).toBeDefined();
       expect(COLUMN_PATTERNS.amount).toBeDefined();
       expect(COLUMN_PATTERNS.debit).toBeDefined();
       expect(COLUMN_PATTERNS.credit).toBeDefined();
@@ -202,7 +202,7 @@ describe('columnDetector', () => {
 
     it('should have multiple patterns per type', () => {
       expect(COLUMN_PATTERNS.date.length).toBeGreaterThan(1);
-      expect(COLUMN_PATTERNS.description.length).toBeGreaterThan(1);
+      expect(COLUMN_PATTERNS.entity.length).toBeGreaterThan(1);
     });
   });
 
@@ -213,7 +213,7 @@ describe('columnDetector', () => {
         const result = detectColumns(headers);
 
         expect(result.mapping.date).toBe('Date');
-        expect(result.mapping.description).toBe('Description');
+        expect(result.mapping.entity).toBe('Description');
         expect(result.mapping.amount).toBe('Amount');
         expect(result.mapping.category).toBe('Category');
       });
@@ -223,7 +223,7 @@ describe('columnDetector', () => {
         const result = detectColumns(headers);
 
         expect(result.mapping.date).toBe('DATE');
-        expect(result.mapping.description).toBe('DESCRIPTION');
+        expect(result.mapping.entity).toBe('DESCRIPTION');
         expect(result.mapping.amount).toBe('AMOUNT');
       });
 
@@ -240,7 +240,7 @@ describe('columnDetector', () => {
         const result = detectColumns(headers);
 
         expect(result.confidence.date).toBe(100);
-        expect(result.confidence.description).toBe(100);
+        expect(result.confidence.entity).toBe(100);
         expect(result.confidence.amount).toBe(100);
       });
     });
@@ -251,7 +251,7 @@ describe('columnDetector', () => {
         const result = detectColumns(headers);
 
         expect(result.mapping.date).toBe('Dte');
-        expect(result.mapping.description).toBe('Descritpion');
+        expect(result.mapping.entity).toBe('Descritpion');
         expect(result.mapping.amount).toBe('Ammount');
       });
 
@@ -260,7 +260,7 @@ describe('columnDetector', () => {
         const result = detectColumns(headers);
 
         expect(result.confidence.date).toBeLessThan(100);
-        expect(result.confidence.description).toBeLessThan(100);
+        expect(result.confidence.entity).toBeLessThan(100);
       });
 
       it('should not match completely different strings', () => {
@@ -268,7 +268,7 @@ describe('columnDetector', () => {
         const result = detectColumns(headers);
 
         expect(result.mapping.date).toBeUndefined();
-        expect(result.mapping.description).toBeUndefined();
+        expect(result.mapping.entity).toBeUndefined();
         expect(result.mapping.amount).toBeUndefined();
       });
     });
@@ -310,7 +310,7 @@ describe('columnDetector', () => {
 
         const result = detectColumns(headers, sampleRows);
 
-        expect(result.mapping.description).toBe('Col2');
+        expect(result.mapping.entity).toBe('Col2');
       });
     });
 
@@ -416,7 +416,7 @@ describe('columnDetector', () => {
 
         expect(result.mapping.date).toBe('Date (MM/DD/YYYY)');
         expect(result.mapping.amount).toBe('Amount ($)');
-        expect(result.mapping.description).toBe('Description/Memo');
+        expect(result.mapping.entity).toBe('Description/Memo');
       });
     });
 
@@ -466,7 +466,7 @@ describe('columnDetector', () => {
         const result = detectColumns(headers);
 
         expect(result.mapping.date).toBe('Posted Date');
-        expect(result.mapping.description).toBe('Description');
+        expect(result.mapping.entity).toBe('Description');
         expect(result.mapping.debit).toBe('Debits');
         expect(result.mapping.credit).toBe('Credits');
       });
@@ -482,7 +482,7 @@ describe('columnDetector', () => {
         const result = detectColumns(headers);
 
         expect(result.mapping.date).toBe('Trans Date');
-        expect(result.mapping.merchant).toBe('Merchant Name');
+        expect(result.mapping.entity).toBe('Merchant Name');
         expect(result.mapping.category).toBe('Category');
         expect(result.mapping.amount).toBe('Amount');
       });
@@ -498,7 +498,7 @@ describe('columnDetector', () => {
         const result = detectColumns(headers, sampleRows);
 
         expect(result.mapping.date).toBe('When');
-        expect(result.mapping.description).toBe('What');
+        expect(result.mapping.entity).toBe('What');
         expect(result.mapping.amount).toBe('How Much');
       });
     });

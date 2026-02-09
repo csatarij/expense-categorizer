@@ -13,7 +13,7 @@ function createTransaction(
   return {
     id: crypto.randomUUID(),
     date: new Date('2024-01-15'),
-    description: 'Test Transaction',
+    entity: 'Test Transaction',
     amount: 100,
     currency: 'USD',
     isManuallyEdited: false,
@@ -101,7 +101,7 @@ describe('exactMatch', () => {
   it('should find an exact match', () => {
     const historicalData: Transaction[] = [
       createTransaction({
-        description: 'STARBUCKS',
+        entity: 'STARBUCKS',
         category: 'Food & Dining',
         subcategory: 'Coffee Shops',
       }),
@@ -118,7 +118,7 @@ describe('exactMatch', () => {
   it('should perform case-insensitive matching', () => {
     const historicalData: Transaction[] = [
       createTransaction({
-        description: 'AMAZON.COM',
+        entity: 'AMAZON.COM',
         category: 'Shopping',
       }),
     ];
@@ -132,7 +132,7 @@ describe('exactMatch', () => {
   it('should handle special character differences', () => {
     const historicalData: Transaction[] = [
       createTransaction({
-        description: 'MCDONALD\'S',
+        entity: 'MCDONALD\'S',
         category: 'Food & Dining',
         subcategory: 'Fast Food',
       }),
@@ -147,7 +147,7 @@ describe('exactMatch', () => {
   it('should normalize whitespace for matching', () => {
     const historicalData: Transaction[] = [
       createTransaction({
-        description: 'WHOLE FOODS MKT',
+        entity: 'WHOLE FOODS MKT',
         category: 'Groceries',
       }),
     ];
@@ -161,12 +161,12 @@ describe('exactMatch', () => {
   it('should prefer manually edited matches', () => {
     const historicalData: Transaction[] = [
       createTransaction({
-        description: 'STARBUCKS #001',
+        entity: 'STARBUCKS #001',
         category: 'Food & Dining',
         isManuallyEdited: false,
       }),
       createTransaction({
-        description: 'STARBUCKS #002',
+        entity: 'STARBUCKS #002',
         category: 'Coffee',
         isManuallyEdited: true,
       }),
@@ -182,7 +182,7 @@ describe('exactMatch', () => {
   it('should calculate correct confidence for non-manual matches', () => {
     const historicalData: Transaction[] = [
       createTransaction({
-        description: 'TARGET',
+        entity: 'TARGET',
         category: 'Shopping',
         isManuallyEdited: false,
       }),
@@ -197,7 +197,7 @@ describe('exactMatch', () => {
   it('should calculate correct confidence for manual matches', () => {
     const historicalData: Transaction[] = [
       createTransaction({
-        description: 'COSTCO',
+        entity: 'COSTCO',
         category: 'Groceries',
         isManuallyEdited: true,
       }),
@@ -212,7 +212,7 @@ describe('exactMatch', () => {
   it('should return null when no match found', () => {
     const historicalData: Transaction[] = [
       createTransaction({
-        description: 'STARBUCKS',
+        entity: 'STARBUCKS',
         category: 'Food & Dining',
       }),
     ];
@@ -225,7 +225,7 @@ describe('exactMatch', () => {
   it('should return null for empty description', () => {
     const historicalData: Transaction[] = [
       createTransaction({
-        description: 'STARBUCKS',
+        entity: 'STARBUCKS',
         category: 'Food & Dining',
       }),
     ];
@@ -240,7 +240,7 @@ describe('exactMatch', () => {
   it('should handle empty description', () => {
     const historicalData: Transaction[] = [
       createTransaction({
-        description: 'STARBUCKS',
+        entity: 'STARBUCKS',
         category: 'Food & Dining',
       }),
     ];
@@ -251,11 +251,11 @@ describe('exactMatch', () => {
   it('should skip transactions without categories', () => {
     const historicalData: Transaction[] = [
       createTransaction({
-        description: 'STARBUCKS',
+        entity: 'STARBUCKS',
         // No category - should be skipped
       }),
       createTransaction({
-        description: 'STARBUCKS',
+        entity: 'STARBUCKS',
         category: 'Coffee',
       }),
     ];
@@ -269,7 +269,7 @@ describe('exactMatch', () => {
   it('should generate appropriate reason for single match', () => {
     const historicalData: Transaction[] = [
       createTransaction({
-        description: 'NETFLIX',
+        entity: 'NETFLIX',
         category: 'Entertainment',
         isManuallyEdited: false,
       }),
@@ -284,15 +284,15 @@ describe('exactMatch', () => {
   it('should generate appropriate reason for multiple matches', () => {
     const historicalData: Transaction[] = [
       createTransaction({
-        description: 'SPOTIFY',
+        entity: 'SPOTIFY',
         category: 'Entertainment',
       }),
       createTransaction({
-        description: 'SPOTIFY',
+        entity: 'SPOTIFY',
         category: 'Entertainment',
       }),
       createTransaction({
-        description: 'SPOTIFY',
+        entity: 'SPOTIFY',
         category: 'Entertainment',
       }),
     ];
@@ -305,7 +305,7 @@ describe('exactMatch', () => {
   it('should generate appropriate reason for user-confirmed matches', () => {
     const historicalData: Transaction[] = [
       createTransaction({
-        description: 'APPLE.COM',
+        entity: 'APPLE.COM',
         category: 'Technology',
         isManuallyEdited: true,
       }),
@@ -320,7 +320,7 @@ describe('exactMatch', () => {
     it('should match AMAZON.COM pattern', () => {
       const historicalData: Transaction[] = [
         createTransaction({
-          description: 'AMAZON.COM',
+          entity: 'AMAZON.COM',
           category: 'Shopping',
           subcategory: 'Online Shopping',
         }),
@@ -335,7 +335,7 @@ describe('exactMatch', () => {
     it('should match STARBUCKS with store numbers', () => {
       const historicalData: Transaction[] = [
         createTransaction({
-          description: 'STARBUCKS #12345',
+          entity: 'STARBUCKS #12345',
           category: 'Food & Dining',
           subcategory: 'Coffee Shops',
         }),
@@ -351,7 +351,7 @@ describe('exactMatch', () => {
     it('should match McDonald\'s with apostrophe variations', () => {
       const historicalData: Transaction[] = [
         createTransaction({
-          description: 'MCDONALD\'S',
+          entity: 'MCDONALD\'S',
           category: 'Food & Dining',
           subcategory: 'Fast Food',
         }),
@@ -366,7 +366,7 @@ describe('exactMatch', () => {
     it('should match WHOLE FOODS MKT pattern', () => {
       const historicalData: Transaction[] = [
         createTransaction({
-          description: 'WHOLE FOODS MKT',
+          entity: 'WHOLE FOODS MKT',
           category: 'Groceries',
         }),
       ];
@@ -380,7 +380,7 @@ describe('exactMatch', () => {
     it('should match UBER *EATS pattern', () => {
       const historicalData: Transaction[] = [
         createTransaction({
-          description: 'UBER *EATS',
+          entity: 'UBER *EATS',
           category: 'Food & Dining',
           subcategory: 'Food Delivery',
         }),
@@ -396,7 +396,7 @@ describe('exactMatch', () => {
     it('should match SQ * (Square) patterns', () => {
       const historicalData: Transaction[] = [
         createTransaction({
-          description: 'SQ *LOCAL COFFEE',
+          entity: 'SQ *LOCAL COFFEE',
           category: 'Food & Dining',
         }),
       ];
@@ -410,7 +410,7 @@ describe('exactMatch', () => {
     it('should match PAYPAL * patterns', () => {
       const historicalData: Transaction[] = [
         createTransaction({
-          description: 'PAYPAL *SPOTIFY',
+          entity: 'PAYPAL *SPOTIFY',
           category: 'Entertainment',
           subcategory: 'Subscriptions',
         }),
@@ -428,7 +428,7 @@ describe('exactMatch', () => {
       const longDescription = 'A'.repeat(500) + ' STORE #12345';
       const historicalData: Transaction[] = [
         createTransaction({
-          description: longDescription,
+          entity: longDescription,
           category: 'Shopping',
         }),
       ];
@@ -442,7 +442,7 @@ describe('exactMatch', () => {
     it('should handle descriptions with only special characters', () => {
       const historicalData: Transaction[] = [
         createTransaction({
-          description: 'TEST',
+          entity: 'TEST',
           category: 'Test',
         }),
       ];
@@ -455,7 +455,7 @@ describe('exactMatch', () => {
     it('should handle unicode characters', () => {
       const historicalData: Transaction[] = [
         createTransaction({
-          description: 'CAFÉ EXPRESS',
+          entity: 'CAFÉ EXPRESS',
           category: 'Food & Dining',
         }),
       ];
@@ -470,12 +470,12 @@ describe('exactMatch', () => {
     it('should use first manually edited match when multiple exist', () => {
       const historicalData: Transaction[] = [
         createTransaction({
-          description: 'CHIPOTLE',
+          entity: 'CHIPOTLE',
           category: 'Food',
           isManuallyEdited: true,
         }),
         createTransaction({
-          description: 'CHIPOTLE',
+          entity: 'CHIPOTLE',
           category: 'Restaurants',
           isManuallyEdited: true,
         }),
@@ -490,17 +490,17 @@ describe('exactMatch', () => {
     it('should handle mixed manual and non-manual matches', () => {
       const historicalData: Transaction[] = [
         createTransaction({
-          description: 'CVS PHARMACY',
+          entity: 'CVS PHARMACY',
           category: 'Shopping',
           isManuallyEdited: false,
         }),
         createTransaction({
-          description: 'CVS PHARMACY',
+          entity: 'CVS PHARMACY',
           category: 'Health',
           isManuallyEdited: true,
         }),
         createTransaction({
-          description: 'CVS PHARMACY',
+          entity: 'CVS PHARMACY',
           category: 'Shopping',
           isManuallyEdited: false,
         }),

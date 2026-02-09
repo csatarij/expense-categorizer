@@ -193,29 +193,43 @@ function detectColumnMappings(headers: string[]): ColumnMapping {
     mapping.date = headers[dateIndex];
   }
 
-  // Description detection
-  const descPatterns = [
+  // Entity detection
+  const entityPatterns = [
+    'entity',
     'description',
     'desc',
+    'merchant',
+    'payee',
+    'vendor',
+    'store',
+    'retailer',
     'memo',
     'narrative',
     'details',
     'transaction',
+    'name',
   ];
-  const descIndex = lowerHeaders.findIndex((h) =>
-    descPatterns.some((p) => h.includes(p) && !h.includes('date'))
+  const entityIndex = lowerHeaders.findIndex((h) =>
+    entityPatterns.some((p) => h.includes(p) && !h.includes('date'))
   );
-  if (descIndex !== -1 && headers[descIndex]) {
-    mapping.description = headers[descIndex];
+  if (entityIndex !== -1 && headers[entityIndex]) {
+    mapping.entity = headers[entityIndex];
   }
 
-  // Merchant detection
-  const merchantPatterns = ['merchant', 'payee', 'vendor', 'store', 'retailer'];
-  const merchantIndex = lowerHeaders.findIndex((h) =>
-    merchantPatterns.some((p) => h.includes(p))
+  // Notes detection
+  const notesPatterns = [
+    'notes',
+    'note',
+    'subject',
+    'comment',
+    'remarks',
+    'custom description',
+  ];
+  const notesIndex = lowerHeaders.findIndex((h) =>
+    notesPatterns.some((p) => h.includes(p))
   );
-  if (merchantIndex !== -1 && headers[merchantIndex]) {
-    mapping.merchant = headers[merchantIndex];
+  if (notesIndex !== -1 && headers[notesIndex]) {
+    mapping.notes = headers[notesIndex];
   }
 
   // Amount detection

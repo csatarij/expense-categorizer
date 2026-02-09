@@ -15,7 +15,7 @@ interface KeywordRule {
 }
 
 interface TransactionForLearning {
-  description: string;
+  entity: string;
   category: string;
   subcategory?: string;
 }
@@ -114,7 +114,7 @@ describe('Phase 2 - Keyword Rule', () => {
   describe('learnKeywordFromTransaction', () => {
     it('should return null for transaction without category', () => {
       const transaction = {
-        description: 'Some description',
+        entity: 'Some description',
         isManuallyEdited: false,
       };
 
@@ -125,7 +125,7 @@ describe('Phase 2 - Keyword Rule', () => {
 
     it('should create new rule from transaction', () => {
       const transaction: TransactionForLearning = {
-        description: 'New Merchant Store',
+        entity: 'New Merchant Store',
         category: 'Shopping',
         subcategory: 'Electronics',
       };
@@ -138,7 +138,7 @@ describe('Phase 2 - Keyword Rule', () => {
 
     it('should extract keywords from description', () => {
       const transaction: TransactionForLearning = {
-        description: 'Amazon Web Services',
+        entity: 'Amazon Web Services',
         category: 'Shopping',
       };
 
@@ -151,7 +151,7 @@ describe('Phase 2 - Keyword Rule', () => {
 
     it('should filter short keywords', () => {
       const transaction: TransactionForLearning = {
-        description: 'AB',
+        entity: 'AB',
         category: 'Shopping',
       };
 

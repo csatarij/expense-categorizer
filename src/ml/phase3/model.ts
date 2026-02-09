@@ -147,7 +147,7 @@ function prepareTrainingData(transactions: Transaction[]): {
     decoder.set(index, category);
   });
 
-  const descriptions = categorized.map((t) => t.description);
+  const descriptions = categorized.map((t) => t.entity);
   const labels = categorized.map((t) => {
     const cat = encoder.get(t.category as string);
     return cat !== undefined ? cat : 0;

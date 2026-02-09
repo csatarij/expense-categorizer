@@ -116,7 +116,7 @@ export class PatternLearner {
   private learnMerchantPattern(transaction: Transaction): void {
     if (!transaction.category) return;
 
-    const merchant = extractMerchant(transaction.description);
+    const merchant = extractMerchant(transaction.entity);
     const existing = this.merchantPatterns.get(merchant);
 
     if (existing) {
@@ -166,7 +166,7 @@ export class PatternLearner {
   private learnRecurringPattern(transaction: Transaction): void {
     if (!transaction.category) return;
 
-    const key = normalizeDescription(transaction.description);
+    const key = normalizeDescription(transaction.entity);
     const existing = this.recurringPatterns.get(key);
 
     if (existing) {
@@ -200,7 +200,7 @@ export class PatternLearner {
       }
     } else {
       this.recurringPatterns.set(key, {
-        description: transaction.description,
+        description: transaction.entity,
         category: transaction.category,
         subcategory: transaction.subcategory ?? undefined,
         recurringInterval: 'monthly',
@@ -215,11 +215,11 @@ export class PatternLearner {
   }
 
   categorizeByPattern(transaction: {
-    description: string;
+    entity: string;
     amount: number;
     date?: Date;
   }): CategorySuggestion | null {
-    const merchantPattern = this.getMerchantPattern(transaction.description);
+    const merchantPattern = this.getMerchantPattern(transaction.entity);
     if (merchantPattern) {
       const suggestion: CategorySuggestion = {
         category: merchantPattern.category,
@@ -233,7 +233,7 @@ export class PatternLearner {
       return suggestion;
     }
 
-    const recurringPattern = this.getRecurringPattern(transaction.description);
+    const recurringPattern = this.getRecurringPattern(transaction.entity);
     if (recurringPattern) {
       const suggestion: CategorySuggestion = {
         category: recurringPattern.category,
@@ -367,7 +367,7 @@ export class PatternLearner {
 }
 
 export function categorizeByHistoricalPattern(
-  transaction: { description: string; amount: number; date?: Date },
+  transaction: { entity: string; amount: number; date?: Date },
   historicalData: Transaction[],
   learner?: PatternLearner
 ): CategorySuggestion | null {

@@ -35,7 +35,10 @@ function createMockXLSXFile(
   const ws = XLSX.utils.aoa_to_sheet(data);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-  const buffer = XLSX.write(wb, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer;
+  const buffer = XLSX.write(wb, {
+    type: 'array',
+    bookType: 'xlsx',
+  }) as ArrayBuffer;
   const blob = new Blob([buffer], {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   });
@@ -122,7 +125,8 @@ describe('fileParser', () => {
 
   describe('parseCSV', () => {
     it('should parse valid CSV file', async () => {
-      const csvContent = 'Date,Description,Amount\n2024-01-01,Test Transaction,-50.00';
+      const csvContent =
+        'Date,Description,Amount\n2024-01-01,Test Transaction,-50.00';
       const file = createMockFile(csvContent, 'test.csv');
       const result = await parseCSV(file);
 
@@ -261,7 +265,7 @@ describe('fileParser', () => {
       const result = await parseFile(file);
 
       expect(result.detectedColumns.date).toBe('Transaction Date');
-      expect(result.detectedColumns.description).toBe('Description');
+      expect(result.detectedColumns.entity).toBe('Description');
       expect(result.detectedColumns.amount).toBe('Amount');
       expect(result.detectedColumns.category).toBe('Category');
     });
@@ -283,6 +287,24 @@ describe('fileParser', () => {
       const result = await parseFile(file);
 
       expect(result.detectedColumns.currency).toBe('Currency');
+    });
+
+    it('should detect notes column', async () => {
+      const csvContent =
+        'Date,Entity,Amount,Notes\n2024-01-01,Test Store,50.00,Business expense';
+      const file = createMockFile(csvContent, 'test.csv');
+      const result = await parseFile(file);
+
+      expect(result.detectedColumns.notes).toBe('Notes');
+    });
+
+    it('should detect subject as notes column', async () => {
+      const csvContent =
+        'Date,Entity,Amount,Subject\n2024-01-01,Test Store,50.00,Business expense';
+      const file = createMockFile(csvContent, 'test.csv');
+      const result = await parseFile(file);
+
+      expect(result.detectedColumns.notes).toBe('Subject');
     });
 
     it('should respect custom max file size option', async () => {
@@ -329,7 +351,8 @@ describe('fileParser', () => {
 
   describe('header extraction', () => {
     it('should handle headers with spaces', async () => {
-      const csvContent = 'Transaction Date,Full Description,Total Amount\n2024-01-01,Test,-50';
+      const csvContent =
+        'Transaction Date,Full Description,Total Amount\n2024-01-01,Test,-50';
       const file = createMockFile(csvContent, 'test.csv');
       const result = await parseFile(file);
 

@@ -28,8 +28,8 @@ function transactionsToRows(
   return transactions.map((transaction) => {
     const baseRow: Record<string, unknown> = {
       Date: transaction.date.toISOString().split('T')[0],
-      Merchant: transaction.merchant || '',
-      Description: transaction.description,
+      Entity: transaction.entity,
+      Notes: transaction.notes || '',
       Amount: transaction.amount,
       Currency: transaction.currency,
       Category: transaction.category || '',
@@ -92,8 +92,8 @@ export function exportToXLSX(
   // Set column widths for better readability
   const columnWidths = [
     { wch: 12 }, // Date
-    { wch: 25 }, // Merchant
-    { wch: 40 }, // Description
+    { wch: 40 }, // Entity
+    { wch: 40 }, // Notes
     { wch: 12 }, // Amount
     { wch: 10 }, // Currency
     { wch: 20 }, // Category
@@ -142,7 +142,7 @@ export function mergeTransactions(
   const existingMap = new Map<string, Transaction>();
 
   existing.forEach((t) => {
-    const key = `${t.date.toISOString()}-${t.description}-${String(t.amount)}-${t.currency}`;
+    const key = `${t.date.toISOString()}-${t.entity}-${String(t.amount)}-${t.currency}`;
     existingMap.set(key, t);
   });
 
@@ -150,7 +150,7 @@ export function mergeTransactions(
   const merged = [...existing];
 
   newTransactions.forEach((t) => {
-    const key = `${t.date.toISOString()}-${t.description}-${String(t.amount)}-${t.currency}`;
+    const key = `${t.date.toISOString()}-${t.entity}-${String(t.amount)}-${t.currency}`;
     if (!existingMap.has(key)) {
       merged.push(t);
     }
@@ -176,7 +176,7 @@ export interface MergeResult {
  * about the merge operation. This is useful for providing user feedback
  * about duplicate detection and newly added transactions.
  *
- * Duplicate detection uses a composite key of: date + description + amount + currency
+ * Duplicate detection uses a composite key of: date + entity + amount + currency
  *
  * @param existing - Array of existing transactions
  * @param newTransactions - Array of new transactions to merge
@@ -197,7 +197,7 @@ export function mergeTransactionsWithMetadata(
 
   // Build map of existing transactions
   existing.forEach((t) => {
-    const key = `${t.date.toISOString()}-${t.description}-${String(t.amount)}-${t.currency}`;
+    const key = `${t.date.toISOString()}-${t.entity}-${String(t.amount)}-${t.currency}`;
     existingMap.set(key, t);
   });
 
@@ -205,7 +205,7 @@ export function mergeTransactionsWithMetadata(
 
   // Check each new transaction for duplicates
   newTransactions.forEach((t) => {
-    const key = `${t.date.toISOString()}-${t.description}-${String(t.amount)}-${t.currency}`;
+    const key = `${t.date.toISOString()}-${t.entity}-${String(t.amount)}-${t.currency}`;
     if (existingMap.has(key)) {
       duplicates.push(t);
     } else {

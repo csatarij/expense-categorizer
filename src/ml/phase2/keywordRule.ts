@@ -695,17 +695,17 @@ export function categorizeByKeywordRule(
 
 export function learnKeywordFromTransaction(
   transaction: {
-    description: string;
+    entity: string;
     category: string;
     subcategory?: string;
   },
   existingRules: KeywordRule[] = []
 ): KeywordRule | null {
-  if (!transaction.category || !transaction.description) {
+  if (!transaction.category || !transaction.entity) {
     return null;
   }
 
-  const normalizedDescription = normalizeForMatching(transaction.description);
+  const normalizedDescription = normalizeForMatching(transaction.entity);
   const keywords = normalizedDescription
     .split(/\s+/)
     .filter((w) => w.length > 2);

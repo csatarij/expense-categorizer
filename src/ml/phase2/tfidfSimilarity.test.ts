@@ -13,7 +13,7 @@ const mockTransactions: Transaction[] = [
   {
     id: '1',
     date: new Date('2024-01-15'),
-    description: 'STARBUCKS COFFEE SHOP',
+    entity: 'STARBUCKS COFFEE SHOP',
     amount: -5.5,
     currency: 'USD',
     category: 'Food & Dining',
@@ -24,7 +24,7 @@ const mockTransactions: Transaction[] = [
   {
     id: '2',
     date: new Date('2024-01-16'),
-    description: 'WALMART GROCERY STORE',
+    entity: 'WALMART GROCERY STORE',
     amount: -45.67,
     currency: 'USD',
     category: 'Shopping',
@@ -35,7 +35,7 @@ const mockTransactions: Transaction[] = [
   {
     id: '3',
     date: new Date('2024-01-17'),
-    description: 'SHELL GAS STATION FUEL',
+    entity: 'SHELL GAS STATION FUEL',
     amount: -50.0,
     currency: 'USD',
     category: 'Transportation',
@@ -103,7 +103,7 @@ describe('Phase 2 - TF-IDF Similarity', () => {
         {
           id: '4',
           date: new Date('2024-01-18'),
-          description: 'No Category Transaction',
+          entity: 'No Category Transaction',
           amount: -10.0,
           currency: 'USD',
           isManuallyEdited: false,
@@ -198,7 +198,7 @@ describe('Phase 2 - TF-IDF Similarity', () => {
         {
           id: '4',
           date: new Date('2024-01-18'),
-          description: 'No Category Transaction',
+          entity: 'No Category Transaction',
           amount: -10.0,
           currency: 'USD',
           isManuallyEdited: false,

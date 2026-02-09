@@ -66,26 +66,23 @@ export function CategorizationControls({
       let suggestion = null;
 
       if (selectedPhases.includes(1)) {
-        suggestion = exactMatch(transaction.description, historicalData);
+        suggestion = exactMatch(transaction.entity, historicalData);
       }
 
       if (!suggestion && selectedPhases.includes(2)) {
         if (phase2Methods.includes('keyword')) {
           suggestion ??= categorizeByKeywordRule(
-            transaction.description,
+            transaction.entity,
             DEFAULT_CATEGORIES
           );
         }
 
         if (phase2Methods.includes('fuzzy') && !suggestion) {
-          suggestion ??= fuzzyMatch(transaction.description, historicalData);
+          suggestion ??= fuzzyMatch(transaction.entity, historicalData);
         }
 
         if (phase2Methods.includes('tfidf') && !suggestion) {
-          suggestion ??= categorizeByTFIDF(
-            transaction.description,
-            historicalData
-          );
+          suggestion ??= categorizeByTFIDF(transaction.entity, historicalData);
         }
       }
 
@@ -95,7 +92,7 @@ export function CategorizationControls({
         }
 
         try {
-          suggestion = await predictCategory(transaction.description);
+          suggestion = await predictCategory(transaction.entity);
         } catch (err) {
           console.error('ML prediction error:', err);
         }
@@ -105,7 +102,7 @@ export function CategorizationControls({
         const updatedTransaction: Transaction = {
           id: transaction.id,
           date: transaction.date,
-          description: transaction.description,
+          entity: transaction.entity,
           amount: transaction.amount,
           currency: transaction.currency,
           category: suggestion.category,
@@ -116,10 +113,6 @@ export function CategorizationControls({
 
         if (suggestion.subcategory) {
           updatedTransaction.subcategory = suggestion.subcategory;
-        }
-
-        if (transaction.merchant) {
-          updatedTransaction.merchant = transaction.merchant;
         }
 
         if (transaction.metadata) {
