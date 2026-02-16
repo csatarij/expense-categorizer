@@ -1,4 +1,3 @@
-import * as XLSX from 'xlsx';
 import {
   DEFAULT_CATEGORIES,
   getCategoryNames,
@@ -64,13 +63,19 @@ async function extractCategoryFromCSV(file: File): Promise<CategoriesFromFile> {
   for (const row of data) {
     if (row[categoryKey]) {
       const category = row[categoryKey];
+      const categoryStr =
+        typeof category === 'string' || typeof category === 'number'
+          ? String(category)
+          : '';
+
+      if (!categoryStr) continue;
 
       // Find the category in app's taxonomy
       const validCategory = getCategoryNames().find(
         (c) =>
-          String(c).toLowerCase() === String(category).toLowerCase() ||
-          String(category).toLowerCase().includes(String(c).toLowerCase()) ||
-          String(c).toLowerCase().includes(String(category).toLowerCase())
+          c.toLowerCase() === categoryStr.toLowerCase() ||
+          categoryStr.toLowerCase().includes(c.toLowerCase()) ||
+          c.toLowerCase().includes(categoryStr.toLowerCase())
       );
 
       if (validCategory) {
@@ -81,8 +86,13 @@ async function extractCategoryFromCSV(file: File): Promise<CategoriesFromFile> {
 
         if (subcategoryKey && row[subcategoryKey]) {
           const subcategory = row[subcategoryKey];
+          const subcategoryStr =
+            typeof subcategory === 'string' || typeof subcategory === 'number'
+              ? String(subcategory)
+              : '';
+
           const validSubcategory = getSubcategories(validCategory).find(
-            (s) => String(s).toLowerCase() === String(subcategory).toLowerCase()
+            (s) => s.toLowerCase() === subcategoryStr.toLowerCase()
           );
 
           if (validSubcategory) {
@@ -107,6 +117,7 @@ async function extractCategoryFromCSV(file: File): Promise<CategoriesFromFile> {
 async function extractCategoryFromXLSX(
   file: File
 ): Promise<CategoriesFromFile> {
+  const { parseXLSX } = await import('@/utils/fileParser');
   const data = await parseXLSX(file);
 
   if (data.length === 0) {
@@ -126,6 +137,12 @@ async function extractCategoryFromXLSX(
     for (const row of data) {
       if (row[categoryKey]) {
         const category = row[categoryKey];
+        const categoryStr =
+          typeof category === 'string' || typeof category === 'number'
+            ? String(category)
+            : '';
+
+        if (!categoryStr) continue;
 
         // Try different column names for subcategory
         const subcategoryKeys = [
@@ -142,32 +159,31 @@ async function extractCategoryFromXLSX(
             continue;
           }
 
-          if (!row[subcategoryKey] && row[categoryKey]) {
+          if (!row[subcategoryKey]) {
             // Create a reasonable mapping for common German terms
-            const subcategory = mapGermanTermToSubcategory(
-              String(categoryKey),
-              String(row[categoryKey])
-            );
+            mapGermanTermToSubcategory(categoryKey, categoryStr);
 
-            return { category };
+            return { category: categoryStr };
           }
 
-          const subcategory = String(row[subcategoryKey]);
+          const subcategoryRaw = row[subcategoryKey];
+          const subcategoryStr =
+            typeof subcategoryRaw === 'string' ||
+            typeof subcategoryRaw === 'number'
+              ? String(subcategoryRaw)
+              : '';
 
           // Find the category in app's taxonomy
           const validCategory = getCategoryNames().find(
             (c) =>
-              String(c).toLowerCase() === String(category).toLowerCase() ||
-              String(category)
-                .toLowerCase()
-                .includes(String(c).toLowerCase()) ||
-              String(c).toLowerCase().includes(String(category).toLowerCase())
+              c.toLowerCase() === categoryStr.toLowerCase() ||
+              categoryStr.toLowerCase().includes(c.toLowerCase()) ||
+              c.toLowerCase().includes(categoryStr.toLowerCase())
           );
 
           if (validCategory) {
             const validSubcategory = getSubcategories(validCategory).find(
-              (s) =>
-                String(s).toLowerCase() === String(subcategory).toLowerCase()
+              (s) => s.toLowerCase() === subcategoryStr.toLowerCase()
             );
 
             if (validSubcategory) {
@@ -178,7 +194,7 @@ async function extractCategoryFromXLSX(
             }
           }
 
-          return { category };
+          return { category: categoryStr };
         }
       }
     }
@@ -191,7 +207,7 @@ async function extractCategoryFromXLSX(
  * Map German category terms to subcategories
  * Used for files like CathyJaniExpenseTracking2025.xlsx
  */
-function mapGermanTermToSubcategory(column: string, value: string): string {
+function mapGermanTermToSubcategory(_column: string, value: string): string {
   // Find a valid category that contains the value
   if (value.toLowerCase().includes('food')) {
     const cat = getCategoryNames().find((c) => c.includes('Food'));
@@ -257,6 +273,9 @@ export function mergeCategoriesFromFile(newCategories: CategoryTaxonomy): {
 
   for (const [category, subcategories] of Object.entries(newCategories)) {
     if (typeof subcategories !== 'string') {
+      // Skip Misc category - should not be modified
+      if (category === 'Misc') continue;
+
       const existingSubcategories = DEFAULT_CATEGORIES[category] ?? [];
       const newSubcategoryArray = Array.isArray(subcategories)
         ? subcategories
@@ -264,13 +283,17 @@ export function mergeCategoriesFromFile(newCategories: CategoryTaxonomy): {
 
       // Check if category exists
       if (!getCategoryNames().includes(category)) {
-        addedCategories.push(category);
-        // Add the category with all subcategories (or just the first one)
+        // Only add if there are subcategories
         if (newSubcategoryArray.length > 0) {
+          addedCategories.push(category);
           DEFAULT_CATEGORIES[category] = newSubcategoryArray.slice(0, 5);
+          addedSubcategories.push(...newSubcategoryArray.slice(0, 5));
         }
       } else {
         // Category exists, add new subcategories
+        if (!DEFAULT_CATEGORIES[category]) {
+          DEFAULT_CATEGORIES[category] = [];
+        }
         for (const sub of newSubcategoryArray) {
           if (!existingSubcategories.includes(sub)) {
             addedSubcategories.push(sub);

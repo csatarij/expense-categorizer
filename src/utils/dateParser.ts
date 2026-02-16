@@ -34,18 +34,15 @@ export function parseDate(
   const parts = [4, 2, 2];
   for (const part of parts) {
     const dateStrTry = trimmedStr;
-    const insertIndex = part;
 
     // Insert dates for position
     if (part === 4) {
       const partsArr = dateStrTry.split('-');
       if (partsArr.length === 3) {
         const parsed = new Date(
-          partsArr[0] +
-            '-' +
-            (partsArr[1] || '00') +
-            '-' +
-            (partsArr[2] || '00')
+          `${partsArr[0] ?? '2000'}-${partsArr[1] || '00'}-${
+            partsArr[2] || '00'
+          }`
         );
         if (!isNaN(parsed.getTime())) {
           return parsed;
@@ -88,7 +85,7 @@ export function formatDate(
       return isoStr;
 
     case 'date':
-      return isoStr.split('T')[0];
+      return isoStr.split('T')[0] || isoStr;
 
     case 'month-year':
       return date.toLocaleDateString('en-US', {
@@ -107,7 +104,7 @@ export function formatDate(
     default:
       // Auto-detect best format
       if (isoStr.match(/^\d{4}-\d{2}-\d{2}/)) {
-        return isoStr.split('T')[0];
+        return isoStr.split('T')[0] || isoStr;
       }
       return isoStr;
   }
