@@ -132,8 +132,8 @@ export async function parseXLSX(
     const arrayBuffer = await readFileAsArrayBuffer(file);
     const workbook = XLSX.read(arrayBuffer, {
       type: 'array',
-      raw: true,
-      codepage: 65001, // UTF-8
+      cellDates: true,
+      codepage: 65001,
     });
     const firstSheetName = workbook.SheetNames[0];
 

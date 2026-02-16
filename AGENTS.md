@@ -47,6 +47,7 @@ npm run type-check    # TypeScript checking
 - Follow strict TypeScript mode
 - Tailwind CSS for all styling
 - Components should have corresponding `.test.tsx` files
+- **Commit Messages**: Short summaries (1-10 words), no elaboration needed
 
 ## Quality Standards
 
