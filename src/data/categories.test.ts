@@ -19,10 +19,11 @@ describe('categories', () => {
         'Entertainment',
         'Health & Wellness',
         'Bills & Utilities',
+        'FoodShopping',
         'Financial',
         'Education',
         'Pets',
-        'Uncategorized',
+        'Misc',
       ];
 
       expect(Object.keys(DEFAULT_CATEGORIES)).toEqual(expectedCategories);
@@ -35,6 +36,7 @@ describe('categories', () => {
         'Investment Returns',
         'Refunds',
         'Other Income',
+        'Income Salary',
       ]);
     });
 
@@ -44,13 +46,54 @@ describe('categories', () => {
       expect(DEFAULT_CATEGORIES.Housing).toContain('Utilities');
     });
 
-    it('should have empty array for Uncategorized', () => {
-      expect(DEFAULT_CATEGORIES.Uncategorized).toEqual([]);
+    it('should have empty array for Misc', () => {
+      expect(DEFAULT_CATEGORIES.Misc).toEqual([]);
     });
 
-    it('should have Food & Dining category with correct subcategories', () => {
-      expect(DEFAULT_CATEGORIES['Food & Dining']).toContain('Groceries');
-      expect(DEFAULT_CATEGORIES['Food & Dining']).toContain('Restaurants');
+    it('should have FoodShopping category with correct subcategories', () => {
+      expect(DEFAULT_CATEGORIES.FoodShopping).toEqual([
+        'Food',
+        'Food / Groceries',
+        'Groceries Food',
+        'Food / Dining',
+      ]);
+    });
+  });
+
+  describe('category order', () => {
+    it('categories should be in correct order', () => {
+      const expectedOrder = [
+        'Income',
+        'Housing',
+        'Transportation',
+        'Food & Dining',
+        'Shopping',
+        'Entertainment',
+        'Health & Wellness',
+        'Bills & Utilities',
+        'FoodShopping',
+        'Financial',
+        'Education',
+        'Pets',
+        'Misc',
+      ];
+
+      const categories = Object.keys(DEFAULT_CATEGORIES);
+      expect(categories).toHaveLength(13);
+      expect(categories).toEqual(expectedOrder);
+    });
+
+    it('FoodShopping should appear before Financial', () => {
+      const categories = Object.keys(DEFAULT_CATEGORIES);
+      const foodShoppingIndex = categories.indexOf('FoodShopping');
+      const financialIndex = categories.indexOf('Financial');
+      expect(foodShoppingIndex).toBeLessThan(financialIndex);
+    });
+
+    it('Misc should be last category', () => {
+      const categories = Object.keys(DEFAULT_CATEGORIES);
+      const miscIndex = categories.indexOf('Misc');
+      expect(miscIndex).toBe(categories.length - 1);
     });
   });
 
@@ -58,17 +101,17 @@ describe('categories', () => {
     it('should return all category names', () => {
       const names = getCategoryNames();
 
-      expect(names).toHaveLength(12);
+      expect(names).toHaveLength(13);
       expect(names).toContain('Income');
       expect(names).toContain('Housing');
-      expect(names).toContain('Uncategorized');
+      expect(names).toContain('FoodShopping');
     });
 
     it('should return categories in correct order', () => {
       const names = getCategoryNames();
 
       expect(names[0]).toBe('Income');
-      expect(names[names.length - 1]).toBe('Uncategorized');
+      expect(names[names.length - 1]).toBe('Misc');
     });
   });
 
@@ -106,7 +149,8 @@ describe('categories', () => {
       expect(isValidCategory('Income')).toBe(true);
       expect(isValidCategory('Housing')).toBe(true);
       expect(isValidCategory('Food & Dining')).toBe(true);
-      expect(isValidCategory('Uncategorized')).toBe(true);
+      expect(isValidCategory('Misc')).toBe(true);
+      expect(isValidCategory('FoodShopping')).toBe(true);
     });
 
     it('should return false for invalid categories', () => {
@@ -139,6 +183,18 @@ describe('categories', () => {
     it('should be case sensitive', () => {
       expect(isValidSubcategory('Income', 'salary')).toBe(false);
       expect(isValidSubcategory('Income', 'SALARY')).toBe(false);
+    });
+
+    it('should validate FoodShopping subcategories', () => {
+      expect(isValidSubcategory('FoodShopping', 'Food')).toBe(true);
+      expect(isValidSubcategory('FoodShopping', 'Food / Groceries')).toBe(true);
+      expect(isValidSubcategory('FoodShopping', 'Groceries Food')).toBe(true);
+      expect(isValidSubcategory('FoodShopping', 'Food / Dining')).toBe(true);
+    });
+
+    it('should return false for non-FoodShopping subcategories', () => {
+      expect(isValidSubcategory('FoodShopping', 'Groceries')).toBe(false);
+      expect(isValidSubcategory('FoodShopping', 'Restaurants')).toBe(false);
     });
   });
 });
