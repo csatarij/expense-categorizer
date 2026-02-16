@@ -138,10 +138,10 @@ describe('categoryValidator', () => {
       });
     });
 
-    it('should import Uncategorized category', () => {
-      const result = importCategoryFromFile('uncategorized', undefined);
+    it('should import Misc category', () => {
+      const result = importCategoryFromFile('misc', undefined);
       expect(result).toEqual({
-        category: 'Uncategorized',
+        category: 'Misc',
       });
     });
   });
@@ -187,7 +187,7 @@ describe('categoryValidator', () => {
       expect(validateCategory('Financial')).toBe('Financial');
       expect(validateCategory('Education')).toBe('Education');
       expect(validateCategory('Pets')).toBe('Pets');
-      expect(validateCategory('Uncategorized')).toBe('Uncategorized');
+      expect(validateCategory('Misc')).toBe('Misc');
     });
   });
 
@@ -233,8 +233,8 @@ describe('categoryValidator', () => {
     });
 
     it('should handle category with no subcategories', () => {
-      // Uncategorized has no subcategories
-      expect(validateSubcategory('Uncategorized', 'Anything')).toBeUndefined();
+      // Misc has no subcategories
+      expect(validateSubcategory('Misc', 'Anything')).toBeUndefined();
     });
   });
 });
