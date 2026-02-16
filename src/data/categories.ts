@@ -3,6 +3,7 @@ import type { CategoryTaxonomy } from '@/types';
 /**
  * Default category taxonomy for expense categorization.
  * Maps top-level categories to their subcategories.
+ * Extended with common categories from expense tracking examples.
  */
 export const DEFAULT_CATEGORIES: CategoryTaxonomy = {
   Income: [
@@ -11,6 +12,7 @@ export const DEFAULT_CATEGORIES: CategoryTaxonomy = {
     'Investment Returns',
     'Refunds',
     'Other Income',
+    'Income Salary',
   ],
   Housing: [
     'Rent',
@@ -20,6 +22,8 @@ export const DEFAULT_CATEGORIES: CategoryTaxonomy = {
     'Utilities',
     'Maintenance',
     'HOA Fees',
+    'Household',
+    'Rent / Utilities',
   ],
   Transportation: [
     'Gas',
@@ -29,6 +33,8 @@ export const DEFAULT_CATEGORIES: CategoryTaxonomy = {
     'Maintenance & Repairs',
     'Parking',
     'Tolls',
+    'Transport',
+    'Transportation',
   ],
   'Food & Dining': [
     'Groceries',
@@ -36,6 +42,9 @@ export const DEFAULT_CATEGORIES: CategoryTaxonomy = {
     'Coffee Shops',
     'Fast Food',
     'Alcohol & Bars',
+    'Food',
+    'Food & Dining',
+    'Groceries / Dining',
   ],
   Shopping: [
     'Clothing',
@@ -43,6 +52,8 @@ export const DEFAULT_CATEGORIES: CategoryTaxonomy = {
     'Home Goods',
     'Personal Care',
     'Gifts',
+    'Shopping',
+    'Shopping / Gifts',
   ],
   Entertainment: [
     'Streaming Services',
@@ -50,6 +61,9 @@ export const DEFAULT_CATEGORIES: CategoryTaxonomy = {
     'Hobbies',
     'Sports',
     'Travel',
+    'Leisure',
+    'Entertainment Leisure',
+    'Sports Leasure',
   ],
   'Health & Wellness': [
     'Medical',
@@ -58,6 +72,9 @@ export const DEFAULT_CATEGORIES: CategoryTaxonomy = {
     'Vision',
     'Health Insurance',
     'Fitness',
+    'Health',
+    'Health & Wellness',
+    'Health / Mental Health',
   ],
   'Bills & Utilities': [
     'Phone',
@@ -65,27 +82,23 @@ export const DEFAULT_CATEGORIES: CategoryTaxonomy = {
     'Subscriptions',
     'Cable',
     'Other Bills',
+    'Utilities',
+    'Utilities / Bills',
   ],
+  FoodShopping: ['Food', 'Food / Groceries', 'Groceries Food', 'Food / Dining'],
   Financial: [
     'Savings Transfer',
     'Investment',
     'Credit Card Payment',
     'Loan Payment',
     'Bank Fees',
+    'Finance',
+    'Finances',
+    'Savings & Investments',
   ],
-  Education: [
-    'Tuition',
-    'Books',
-    'Courses',
-    'School Supplies',
-  ],
-  Pets: [
-    'Food',
-    'Veterinary',
-    'Supplies',
-    'Grooming',
-  ],
-  Uncategorized: [],
+  Education: ['Tuition', 'Books', 'Courses', 'School Supplies'],
+  Pets: ['Food', 'Veterinary', 'Supplies', 'Grooming'],
+  Misc: [],
 };
 
 /**
@@ -93,6 +106,27 @@ export const DEFAULT_CATEGORIES: CategoryTaxonomy = {
  */
 export const getCategoryNames = (): string[] => {
   return Object.keys(DEFAULT_CATEGORIES);
+};
+
+/**
+ * Get category names in the correct order
+ */
+export const getCategoryOrder = (): string[] => {
+  return [
+    'Income',
+    'Housing',
+    'Transportation',
+    'Food & Dining',
+    'Shopping',
+    'Entertainment',
+    'Health & Wellness',
+    'Bills & Utilities',
+    'FoodShopping',
+    'Financial',
+    'Education',
+    'Pets',
+    'Misc',
+  ];
 };
 
 /**
@@ -118,4 +152,16 @@ export const isValidSubcategory = (
 ): boolean => {
   const subcategories = DEFAULT_CATEGORIES[category];
   return subcategories?.includes(subcategory) ?? false;
+};
+
+/**
+ * Adds a new category to the taxonomy
+ */
+export const addCategory = (
+  category: string,
+  subcategories: string[]
+): void => {
+  if (category && subcategories.some((sub) => sub)) {
+    DEFAULT_CATEGORIES[category] = subcategories;
+  }
 };
