@@ -29,7 +29,7 @@ interface CategoryMapping {
  * Finds matching category and subcategory in the taxonomy
  * Returns the best match with confidence score
  */
-function findBestMatch(
+export function findBestMatch(
   inputCategory: string,
   inputSubcategory: string
 ): CategoryMatch {

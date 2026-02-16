@@ -8,6 +8,7 @@ import { CategorizationControls } from '@/components/CategorizationControls';
 import { parseFile, FileParserError } from '@/utils/fileParser';
 import { mergeTransactionsWithMetadata } from '@/utils/fileExporter';
 import { parseDate } from '@/utils/dateParser';
+import { findBestMatch } from '@/utils/categoryMatcher';
 import type { Transaction, TransactionMetadata } from '@/types';
 
 interface UploadedFileInfo {
@@ -79,6 +80,21 @@ function App() {
           ? cellToString(row[detectedColumns.subcategory])
           : undefined;
 
+        let transactionCategory = undefined;
+        let transactionSubcategory = undefined;
+
+        if (cellCategory) {
+          const match = findBestMatch(cellCategory, cellSubcategory || '');
+
+          if (match.confidence > 0.5) {
+            transactionCategory = match.category;
+            transactionSubcategory =
+              match.subcategory && match.subcategory !== ''
+                ? match.subcategory
+                : undefined;
+          }
+        }
+
         const baseTransaction = {
           id: `${fileId}-${String(index)}`,
           date: isNaN(date.getTime()) ? new Date() : date,
@@ -87,8 +103,8 @@ function App() {
             : '',
           amount,
           currency,
-          category: cellCategory,
-          subcategory: cellSubcategory,
+          category: transactionCategory,
+          subcategory: transactionSubcategory,
           notes,
           isManuallyEdited: false,
           metadata: {
