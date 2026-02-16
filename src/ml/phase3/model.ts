@@ -421,3 +421,20 @@ export async function loadModel(): Promise<boolean> {
     return false;
   }
 }
+
+export function resetModel(): void {
+  if (model) {
+    model.dispose();
+    model = null;
+  }
+  vocabulary = [];
+  categoryEncoder = null;
+  categoryDecoder = null;
+  isInitialized = false;
+  currentMetrics = {
+    accuracy: 0,
+    loss: 0,
+    trainingSamples: 0,
+    validationSamples: 0,
+  };
+}
