@@ -7,7 +7,8 @@ import { FileList } from '@/components/FileList';
 import { CategorizationControls } from '@/components/CategorizationControls';
 import { parseFile, FileParserError } from '@/utils/fileParser';
 import { mergeTransactionsWithMetadata } from '@/utils/fileExporter';
-import { importCategoryFromFile } from '@/utils/categoryValidator';
+import { parseDate } from '@/utils/dateParser';
+import { findBestMatch } from '@/utils/categoryMatcher';
 import type { Transaction, TransactionMetadata } from '@/types';
 
 interface UploadedFileInfo {
@@ -35,15 +36,11 @@ function App() {
 
     try {
       const parsed = await parseFile(file);
-
-      // Generate unique file ID using timestamp
       const fileId = `${file.name}-${String(Date.now())}`;
 
-      // Convert parsed data to Transaction objects
       const newTransactions: Transaction[] = parsed.data.map((row, index) => {
         const { detectedColumns } = parsed;
 
-        // Helper to safely convert cell value to string
         const cellToString = (value: unknown): string => {
           if (value === null || value === undefined) return '';
           if (typeof value === 'string') return value;
@@ -52,7 +49,6 @@ function App() {
           return '';
         };
 
-        // Extract amount (handle debit/credit columns if no amount column)
         let amount = 0;
         if (detectedColumns.amount) {
           amount = parseFloat(cellToString(row[detectedColumns.amount])) || 0;
@@ -64,28 +60,61 @@ function App() {
           amount = credit - debit;
         }
 
-        // Extract currency (default to CHF if not found)
         const currency = detectedColumns.currency
           ? cellToString(row[detectedColumns.currency]).toUpperCase() || 'CHF'
           : 'CHF';
 
-        // Parse date
         const dateStr = detectedColumns.date
           ? cellToString(row[detectedColumns.date])
           : '';
-        const date = new Date(dateStr);
-
-        // Import and validate categories from file if present
-        const importedCategories = importCategoryFromFile(
-          row[detectedColumns.category ?? ''],
-          row[detectedColumns.subcategory ?? '']
-        );
+        const date = parseDate(dateStr);
 
         const notes = detectedColumns.notes
           ? cellToString(row[detectedColumns.notes])
           : undefined;
 
-        const baseTransaction: {
+        const cellCategory = detectedColumns.category
+          ? cellToString(row[detectedColumns.category])
+          : undefined;
+        const cellSubcategory = detectedColumns.subcategory
+          ? cellToString(row[detectedColumns.subcategory])
+          : undefined;
+
+        let transactionCategory = undefined;
+        let transactionSubcategory = undefined;
+
+        if (cellCategory) {
+          const match = findBestMatch(cellCategory, cellSubcategory || '');
+
+          if (match.confidence > 0.5) {
+            transactionCategory = match.category;
+            transactionSubcategory =
+              match.subcategory && match.subcategory !== ''
+                ? match.subcategory
+                : undefined;
+          }
+        }
+
+        const baseTransaction = {
+          id: `${fileId}-${String(index)}`,
+          date: isNaN(date.getTime()) ? new Date() : date,
+          entity: detectedColumns.entity
+            ? cellToString(row[detectedColumns.entity])
+            : '',
+          amount,
+          currency,
+          category: transactionCategory,
+          subcategory: transactionSubcategory,
+          notes,
+          isManuallyEdited: false,
+          metadata: {
+            source: 'upload' as const,
+            fileName: file.name,
+            fileId,
+            rowIndex: index,
+            rawData: row,
+          },
+        } as unknown as {
           id: string;
           date: Date;
           entity: string;
@@ -98,35 +127,13 @@ function App() {
           confidence?: number;
           isManuallyEdited: boolean;
           metadata: TransactionMetadata;
-        } = {
-          id: `${fileId}-${String(index)}`,
-          date: isNaN(date.getTime()) ? new Date() : date,
-          entity: detectedColumns.entity
-            ? cellToString(row[detectedColumns.entity])
-            : '',
-          amount,
-          currency,
-          isManuallyEdited: false,
-          metadata: {
-            source: 'upload' as const,
-            fileName: file.name,
-            fileId,
-            rowIndex: index,
-            rawData: row,
-          },
         };
 
         if (notes) {
-          (baseTransaction as Transaction).notes = notes;
+          baseTransaction.notes = notes;
         }
 
-        return {
-          ...baseTransaction,
-          ...importedCategories,
-          ...(importedCategories.category && {
-            originalCategory: importedCategories.category,
-          }),
-        };
+        return baseTransaction;
       });
 
       // Merge with existing transactions
