@@ -10,12 +10,18 @@ export interface TransactionTableProps {
     subcategory?: string
   ) => void;
   onNotesChange?: (id: string, notes: string) => void;
+  sortColumn?: string;
+  sortDirection?: 'asc' | 'desc';
+  onSort?: (column: string, direction: 'asc' | 'desc') => void;
 }
 
 export function TransactionTable({
   transactions,
   onCategoryChange,
   onNotesChange,
+  sortColumn,
+  sortDirection,
+  onSort,
 }: TransactionTableProps): React.JSX.Element {
   const categories = getCategoryNames();
 
@@ -60,6 +66,25 @@ export function TransactionTable({
     [onNotesChange]
   );
 
+  const handleSort = useCallback(
+    (column: string) => {
+      if (!onSort) {
+        return;
+      }
+
+      if (sortColumn === column) {
+        if (sortDirection === 'asc') {
+          onSort(column, 'desc');
+        } else {
+          onSort(column, 'asc');
+        }
+      } else {
+        onSort(column, 'desc');
+      }
+    },
+    [onSort, sortColumn, sortDirection]
+  );
+
   if (transactions.length === 0) {
     return (
       <div className="py-8 text-center text-gray-500">
@@ -73,29 +98,125 @@ export function TransactionTable({
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-              Date
+            <th
+              className={`cursor-pointer px-4 py-3 text-left text-xs font-medium tracking-wider uppercase hover:bg-gray-100 ${
+                sortColumn === 'date' ? 'bg-gray-200' : ''
+              }`}
+              onClick={() => {
+                handleSort('date');
+              }}
+            >
+              <div className="flex items-center gap-1">
+                Date
+                {sortColumn === 'date' && (
+                  <span>{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                )}
+              </div>
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-              Source
+            <th
+              className={`cursor-pointer px-4 py-3 text-left text-xs font-medium tracking-wider uppercase hover:bg-gray-100 ${
+                sortColumn === 'source' ? 'bg-gray-200' : ''
+              }`}
+              onClick={() => {
+                handleSort('source');
+              }}
+            >
+              <div className="flex items-center gap-1">
+                Source
+                {sortColumn === 'source' && (
+                  <span>{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                )}
+              </div>
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-              Entity
+            <th
+              className={`cursor-pointer px-4 py-3 text-left text-xs font-medium tracking-wider uppercase hover:bg-gray-100 ${
+                sortColumn === 'entity' ? 'bg-gray-200' : ''
+              }`}
+              onClick={() => {
+                handleSort('entity');
+              }}
+            >
+              <div className="flex items-center gap-1">
+                Entity
+                {sortColumn === 'entity' && (
+                  <span>{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                )}
+              </div>
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-              Notes
+            <th
+              className={`cursor-pointer px-4 py-3 text-left text-xs font-medium tracking-wider uppercase hover:bg-gray-100 ${
+                sortColumn === 'notes' ? 'bg-gray-200' : ''
+              }`}
+              onClick={() => {
+                handleSort('notes');
+              }}
+            >
+              <div className="flex items-center gap-1">
+                Notes
+                {sortColumn === 'notes' && (
+                  <span>{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                )}
+              </div>
             </th>
-            <th className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">
-              Amount
+            <th
+              className={`cursor-pointer px-4 py-3 text-right text-xs font-medium tracking-wider uppercase hover:bg-gray-100 ${
+                sortColumn === 'amount' ? 'bg-gray-200' : ''
+              }`}
+              onClick={() => {
+                handleSort('amount');
+              }}
+            >
+              <div className="flex items-center justify-end gap-1">
+                Amount
+                {sortColumn === 'amount' && (
+                  <span>{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                )}
+              </div>
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-              Category
+            <th
+              className={`cursor-pointer px-4 py-3 text-left text-xs font-medium tracking-wider uppercase hover:bg-gray-100 ${
+                sortColumn === 'category' ? 'bg-gray-200' : ''
+              }`}
+              onClick={() => {
+                handleSort('category');
+              }}
+            >
+              <div className="flex items-center gap-1">
+                Category
+                {sortColumn === 'category' && (
+                  <span>{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                )}
+              </div>
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-              Subcategory
+            <th
+              className={`cursor-pointer px-4 py-3 text-left text-xs font-medium tracking-wider uppercase hover:bg-gray-100 ${
+                sortColumn === 'subcategory' ? 'bg-gray-200' : ''
+              }`}
+              onClick={() => {
+                handleSort('subcategory');
+              }}
+            >
+              <div className="flex items-center gap-1">
+                Subcategory
+                {sortColumn === 'subcategory' && (
+                  <span>{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                )}
+              </div>
             </th>
-            <th className="px-4 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase">
-              Confidence
+            <th
+              className={`cursor-pointer px-4 py-3 text-center text-xs font-medium tracking-wider uppercase hover:bg-gray-100 ${
+                sortColumn === 'confidence' ? 'bg-gray-200' : ''
+              }`}
+              onClick={() => {
+                handleSort('confidence');
+              }}
+            >
+              <div className="flex items-center justify-center gap-1">
+                Confidence
+                {sortColumn === 'confidence' && (
+                  <span>{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                )}
+              </div>
             </th>
           </tr>
         </thead>

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, within, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TransactionTable } from './TransactionTable';
 import type { Transaction } from '@/types';
@@ -398,6 +398,99 @@ describe('TransactionTable', () => {
         'Entertainment',
         undefined
       );
+    });
+  });
+
+  describe('sorting', () => {
+    it('should call onSort with date column and desc direction when first clicked', () => {
+      const onSort = vi.fn();
+      const transactions = [createMockTransaction()];
+      render(<TransactionTable transactions={transactions} onSort={onSort} />);
+
+      fireEvent.click(screen.getByText('Date'));
+
+      expect(onSort).toHaveBeenCalledWith('date', 'desc');
+    });
+
+    it('should call onSort with asc direction when same column clicked twice', () => {
+      const onSort = vi.fn();
+      const transactions = [createMockTransaction()];
+      render(
+        <TransactionTable
+          transactions={transactions}
+          onSort={onSort}
+          sortColumn="date"
+          sortDirection="desc"
+        />
+      );
+
+      fireEvent.click(screen.getByText('Date'));
+
+      expect(onSort).toHaveBeenCalledWith('date', 'asc');
+    });
+
+    it('should show desc indicator for date column', () => {
+      const transactions = [createMockTransaction()];
+      render(
+        <TransactionTable
+          transactions={transactions}
+          sortColumn="date"
+          sortDirection="desc"
+        />
+      );
+
+      expect(screen.getByText('Date')).toBeInTheDocument();
+      expect(screen.getByText('▼')).toBeInTheDocument();
+    });
+
+    it('should show asc indicator for date column', () => {
+      const transactions = [createMockTransaction()];
+      render(
+        <TransactionTable
+          transactions={transactions}
+          sortColumn="date"
+          sortDirection="asc"
+        />
+      );
+
+      expect(screen.getByText('Date')).toBeInTheDocument();
+      expect(screen.getByText('▲')).toBeInTheDocument();
+    });
+
+    it('should highlight sorted column with different background', () => {
+      const transactions = [createMockTransaction()];
+      render(
+        <TransactionTable
+          transactions={transactions}
+          sortColumn="date"
+          sortDirection="desc"
+        />
+      );
+
+      const dateHeader = screen.getByText('Date').closest('th');
+      expect(dateHeader).toHaveClass('bg-gray-200');
+    });
+
+    it('should not highlight unsorted column', () => {
+      const transactions = [createMockTransaction()];
+      render(
+        <TransactionTable
+          transactions={transactions}
+          sortColumn="date"
+          sortDirection="desc"
+        />
+      );
+
+      const amountHeader = screen.getByText('Amount').closest('th');
+      expect(amountHeader).not.toHaveClass('bg-gray-200');
+    });
+
+    it('should work without onSort callback', () => {
+      const transactions = [createMockTransaction()];
+      render(<TransactionTable transactions={transactions} />);
+
+      const dateHeader = screen.getByText('Date');
+      expect(() => fireEvent.click(dateHeader)).not.toThrow();
     });
   });
 

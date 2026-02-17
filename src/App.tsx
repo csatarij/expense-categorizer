@@ -1,10 +1,12 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { FileUpload } from '@/components/FileUpload';
 import { TransactionTable } from '@/components/TransactionTable';
 import { DownloadButton } from '@/components/DownloadButton';
 import { MergeSummary } from '@/components/MergeSummary';
 import { FileList } from '@/components/FileList';
 import { CategorizationControls } from '@/components/CategorizationControls';
+import { FilterPanel } from '@/components/FilterPanel/FilterPanel';
+import type { FilterValues } from '@/components/FilterPanel/FilterPanel';
 import { parseFile, FileParserError } from '@/utils/fileParser';
 import { mergeTransactionsWithMetadata } from '@/utils/fileExporter';
 import { parseDate } from '@/utils/dateParser';
@@ -29,6 +31,17 @@ function App() {
     addedCount: number;
     duplicateCount: number;
   } | null>(null);
+
+  const [sortColumn, setSortColumn] = useState<string>('date');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [filterValues, setFilterValues] = useState<FilterValues>({
+    dateRange: { start: null, end: null },
+    amountRange: { min: null, max: null },
+    searchText: '',
+    selectedCategories: new Set(),
+    selectedSubcategories: new Set(),
+    selectedSources: new Set(),
+  });
 
   const handleFileUpload = async (file: File) => {
     setIsLoading(true);
@@ -223,6 +236,119 @@ function App() {
     }
   }, []);
 
+  const handleSort = useCallback(
+    (column: string, direction: 'asc' | 'desc') => {
+      setSortColumn(column);
+      setSortDirection(direction);
+    },
+    []
+  );
+
+  const filteredAndSortedTransactions = useMemo(() => {
+    let result = [...transactions];
+
+    if (filterValues.searchText) {
+      const searchLower = filterValues.searchText.toLowerCase();
+      result = result.filter(
+        (t) =>
+          t.entity.toLowerCase().includes(searchLower) ||
+          (t.notes && t.notes.toLowerCase().includes(searchLower))
+      );
+    }
+
+    if (filterValues.dateRange.start || filterValues.dateRange.end) {
+      result = result.filter((t) => {
+        const date = t.date;
+        if (
+          filterValues.dateRange.start &&
+          date < filterValues.dateRange.start
+        ) {
+          return false;
+        }
+        if (filterValues.dateRange.end && date > filterValues.dateRange.end) {
+          return false;
+        }
+        return true;
+      });
+    }
+
+    if (
+      filterValues.amountRange.min !== null ||
+      filterValues.amountRange.max !== null
+    ) {
+      result = result.filter((t) => {
+        const min = filterValues.amountRange.min;
+        const max = filterValues.amountRange.max;
+        if (min !== null && t.amount < min) {
+          return false;
+        }
+        if (max !== null && t.amount > max) {
+          return false;
+        }
+        return true;
+      });
+    }
+
+    if (filterValues.selectedCategories.size > 0) {
+      result = result.filter(
+        (t) => t.category && filterValues.selectedCategories.has(t.category)
+      );
+    }
+
+    if (filterValues.selectedSubcategories.size > 0) {
+      result = result.filter(
+        (t) =>
+          t.subcategory && filterValues.selectedSubcategories.has(t.subcategory)
+      );
+    }
+
+    if (filterValues.selectedSources.size > 0) {
+      result = result.filter(
+        (t) =>
+          t.metadata?.fileName &&
+          filterValues.selectedSources.has(t.metadata.fileName)
+      );
+    }
+
+    result.sort((a, b) => {
+      let comparison = 0;
+
+      if (sortColumn === 'date') {
+        comparison = a.date.getTime() - b.date.getTime();
+      } else if (sortColumn === 'amount') {
+        comparison = a.amount - b.amount;
+      } else if (sortColumn === 'entity') {
+        comparison = a.entity.localeCompare(b.entity);
+      } else if (sortColumn === 'notes') {
+        comparison = (a.notes || '').localeCompare(b.notes || '');
+      } else if (sortColumn === 'category') {
+        comparison = (a.category || '').localeCompare(b.category || '');
+      } else if (sortColumn === 'subcategory') {
+        comparison = (a.subcategory || '').localeCompare(b.subcategory || '');
+      } else if (sortColumn === 'confidence') {
+        comparison = (a.confidence || 0) - (b.confidence || 0);
+      } else if (sortColumn === 'source') {
+        comparison = (a.metadata?.fileName || '').localeCompare(
+          b.metadata?.fileName || ''
+        );
+      }
+
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+
+    return result;
+  }, [transactions, filterValues, sortColumn, sortDirection]);
+
+  const availableSources = useMemo(() => {
+    const sources = new Set<string>();
+    transactions.forEach((t) => {
+      if (t.metadata?.fileName) {
+        sources.add(t.metadata.fileName);
+      }
+    });
+    return Array.from(sources).sort();
+  }, [transactions]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-primary-600 text-white shadow-lg">
@@ -285,24 +411,44 @@ function App() {
 
           {transactions.length > 0 && (
             <div className="mt-6">
+              <FilterPanel
+                availableSources={availableSources}
+                values={filterValues}
+                onChange={setFilterValues}
+              />
               <div className="mb-4 flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-800">
-                    {transactions.length} Transactions
+                    {filteredAndSortedTransactions.length}{' '}
+                    {filteredAndSortedTransactions.length ===
+                    transactions.length
+                      ? 'Transactions'
+                      : `of ${String(transactions.length)} Transactions`}
                   </h3>
-                  {uploadedFiles.length > 0 && (
+                  {filteredAndSortedTransactions.length !==
+                    transactions.length && (
                     <span className="text-sm text-gray-500">
-                      From {uploadedFiles.length}{' '}
-                      {uploadedFiles.length === 1 ? 'file' : 'files'}
+                      Filters applied
                     </span>
                   )}
+                  {uploadedFiles.length > 0 &&
+                    filteredAndSortedTransactions.length ===
+                      transactions.length && (
+                      <span className="text-sm text-gray-500">
+                        From {uploadedFiles.length}{' '}
+                        {uploadedFiles.length === 1 ? 'file' : 'files'}
+                      </span>
+                    )}
                 </div>
                 <DownloadButton transactions={transactions} />
               </div>
               <TransactionTable
-                transactions={transactions}
+                transactions={filteredAndSortedTransactions}
                 onCategoryChange={handleCategoryChange}
                 onNotesChange={handleNotesChange}
+                sortColumn={sortColumn}
+                sortDirection={sortDirection}
+                onSort={handleSort}
               />
             </div>
           )}
