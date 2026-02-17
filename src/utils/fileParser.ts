@@ -85,30 +85,163 @@ async function readFileAsArrayBuffer(file: File): Promise<ArrayBuffer> {
 }
 
 /**
+ * Detects the CSV separator (comma, semicolon, or tab) from the first line
+ */
+function detectCSVSeparator(firstLine: string): ',' | ';' | '\t' {
+  const commaCount = (firstLine.match(/,/g) ?? []).length;
+  const semicolonCount = (firstLine.match(/;/g) ?? []).length;
+  const tabCount = (firstLine.match(/\t/g) ?? []).length;
+
+  if (semicolonCount > commaCount) {
+    return ';';
+  }
+  if (tabCount > commaCount && tabCount > semicolonCount) {
+    return '\t';
+  }
+  return ',';
+}
+
+/**
  * Parses a CSV file and returns the data as an array of objects
  */
 export async function parseCSV(file: File): Promise<Record<string, unknown>[]> {
   try {
     const arrayBuffer = await readFileAsArrayBuffer(file);
-    const workbook = XLSX.read(arrayBuffer, {
-      type: 'array',
-      raw: true,
-      codepage: 65001, // UTF-8
-    });
-    const firstSheetName = workbook.SheetNames[0];
 
-    if (!firstSheetName) {
-      throw new FileParserError('CSV file contains no data', 'NO_DATA');
+    const decoder = new TextDecoder('utf-8');
+    const text = decoder.decode(arrayBuffer);
+
+    // Normalize line endings to \n
+    const normalizedText = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    const lines = normalizedText
+      .split('\n')
+      .filter((line) => line.trim() !== '');
+
+    if (lines.length === 0) {
+      throw new FileParserError('CSV file is empty', 'NO_DATA');
     }
 
-    const worksheet = workbook.Sheets[firstSheetName];
-    if (!worksheet) {
-      throw new FileParserError('CSV file contains no data', 'NO_DATA');
-    }
-    const data = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet, {
-      defval: '',
-      raw: false,
+    // Detect separator from first line
+    const firstLine = lines[0] ?? '';
+    const separator = detectCSVSeparator(firstLine);
+
+    // Parse CSV handling quotes properly
+    const parseCSVLine = (line: string): string[] => {
+      const result: string[] = [];
+      let current = '';
+      let inQuotes = false;
+      let prevChar = '';
+      let i = 0;
+
+      while (i < line.length) {
+        const char = line[i] as string;
+        const nextChar = i + 1 < line.length ? (line[i + 1] as string) : '';
+
+        // Handle escaped quotes "" which become "
+        if (char === '"' && nextChar === '"') {
+          current += '"';
+          i += 2;
+          prevChar = '"';
+          continue;
+        }
+
+        // Toggle quote state (but only if it's not part of an escape sequence)
+        if (char === '"' && prevChar !== '"') {
+          inQuotes = !inQuotes;
+          i++;
+          prevChar = '"';
+          continue;
+        }
+
+        // Separator handling - only split if not in quotes
+        if (char === separator && !inQuotes) {
+          result.push(current);
+          current = '';
+          i++;
+          prevChar = char;
+          continue;
+        }
+
+        current += char;
+        i++;
+        prevChar = char;
+      }
+
+      // Add the last field
+      result.push(current);
+
+      return result;
+    };
+
+    // Strip outer quotes if the entire line is quoted
+    const stripOuterQuotes = (line: string): string => {
+      const trimmed = line.trim();
+      if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
+        // Check if this is a properly quoted CSV field (should have no separator outside quotes)
+        // If the entire line is wrapped in quotes, remove them
+        return trimmed.slice(1, -1).trim();
+      }
+      return line;
+    };
+
+    // Pre-process lines to strip outer quotes if present
+    const processedLines = lines.map(stripOuterQuotes);
+
+    // Parse headers
+    const headers = parseCSVLine(processedLines[0] ?? '');
+    const cleanedHeaders = headers.map((h) => {
+      let cleaned = h.trim();
+      // Replace all "" with single " throughout
+      cleaned = cleaned.replace(/""/g, '"');
+      // Remove any remaining surrounding quotes
+      if (
+        cleaned.startsWith('"') &&
+        cleaned.endsWith('"') &&
+        cleaned.length > 1
+      ) {
+        cleaned = cleaned.slice(1, -1);
+      }
+      return cleaned.trim();
     });
+
+    if (cleanedHeaders.length === 0) {
+      throw new FileParserError('CSV file has no headers', 'NO_DATA');
+    }
+
+    // Parse data rows
+    const data: Record<string, unknown>[] = [];
+    for (let i = 1; i < processedLines.length; i++) {
+      const line = processedLines[i] ?? '';
+      if (!line.trim()) continue;
+
+      const values = parseCSVLine(line);
+      const row: Record<string, unknown> = {};
+
+      for (let j = 0; j < cleanedHeaders.length; j++) {
+        const header = cleanedHeaders[j];
+        if (!header) continue;
+
+        const value = values[j] ?? '';
+
+        // Replace all "" with single " throughout, then remove surrounding quotes if present
+        let cleanedValue = value.trim();
+        cleanedValue = cleanedValue.replace(/""/g, '"');
+        if (
+          cleanedValue.startsWith('"') &&
+          cleanedValue.endsWith('"') &&
+          cleanedValue.length > 1
+        ) {
+          cleanedValue = cleanedValue.slice(1, -1);
+        }
+        cleanedValue = cleanedValue.trim();
+
+        row[header] = cleanedValue;
+      }
+
+      if (Object.keys(row).length > 0) {
+        data.push(row);
+      }
+    }
 
     return data;
   } catch (error) {
@@ -195,18 +328,13 @@ function detectColumnMappings(headers: string[]): ColumnMapping {
 
   // Entity detection
   const entityPatterns = [
-    'entity',
     'description',
-    'desc',
     'merchant',
     'payee',
     'vendor',
     'store',
     'retailer',
-    'memo',
-    'narrative',
     'details',
-    'transaction',
     'name',
   ];
   const entityIndex = lowerHeaders.findIndex((h) =>
@@ -214,6 +342,23 @@ function detectColumnMappings(headers: string[]): ColumnMapping {
   );
   if (entityIndex !== -1 && headers[entityIndex]) {
     mapping.entity = headers[entityIndex];
+  }
+
+  // Secondary entity patterns for less specific fields
+  const secondaryEntityPatterns = [
+    'transaction',
+    'memo',
+    'narrative',
+    'subject',
+    'reference',
+  ];
+  if (!mapping.entity) {
+    const secondaryIndex = lowerHeaders.findIndex((h) =>
+      secondaryEntityPatterns.some((p) => h.includes(p) && !h.includes('date'))
+    );
+    if (secondaryIndex !== -1 && headers[secondaryIndex]) {
+      mapping.entity = headers[secondaryIndex];
+    }
   }
 
   // Notes detection
@@ -257,6 +402,15 @@ function detectColumnMappings(headers: string[]): ColumnMapping {
   );
   if (creditIndex !== -1 && headers[creditIndex]) {
     mapping.credit = headers[creditIndex];
+  }
+
+  // Balance detection (often present in bank statements but not used for transactions)
+  const balancePatterns = ['balance', 'running balance'];
+  const balanceIndex = lowerHeaders.findIndex((h) =>
+    balancePatterns.some((p) => h.includes(p))
+  );
+  if (balanceIndex !== -1 && headers[balanceIndex]) {
+    mapping.balance = headers[balanceIndex];
   }
 
   // Category detection

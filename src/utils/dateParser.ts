@@ -18,49 +18,88 @@ export function parseDate(
 
   const trimmedStr = dateStr.trim();
 
-  // Try ISO format (YYYY-MM-DD, YYYY-MM-DDTHH:mm:ss, etc.)
+  // Parse slash-separated dates (DD/MM/YYYY or MM/DD/YYYY)
+  const slashMatch = trimmedStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (slashMatch) {
+    const first = parseInt(slashMatch[1] ?? '0', 10);
+    const second = parseInt(slashMatch[2] ?? '0', 10);
+    const year = parseInt(slashMatch[3] ?? '0', 10);
+
+    // If first number > 12, treat as day (DD/MM/YYYY format)
+    // Otherwise, treat first as month (MM/DD/YYYY format)
+    if (first > 12) {
+      const parsed = new Date(year, second - 1, first);
+      if (!isNaN(parsed.getTime())) {
+        return parsed;
+      }
+    } else {
+      const parsed = new Date(year, first - 1, second);
+      if (!isNaN(parsed.getTime())) {
+        return parsed;
+      }
+    }
+  }
+
+  const datePatterns: {
+    pattern: RegExp;
+    parser: (match: RegExpMatchArray) => Date;
+  }[] = [
+    {
+      pattern: /^(\d{4})-(\d{1,2})-(\d{1,2})/,
+      parser: (m) => new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])),
+    },
+    {
+      pattern: /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/,
+      parser: (m) => new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1])),
+    },
+    {
+      pattern: /^(\d{1,2})-(\d{1,2})-(\d{4})$/,
+      parser: (m) => new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1])),
+    },
+    {
+      pattern: /^(\d{4})\.(\d{1,2})\.(\d{1,2})$/,
+      parser: (m) => new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])),
+    },
+    {
+      pattern: /^(\d{4})\/(\d{1,2})\/(\d{1,2})$/,
+      parser: (m) => new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])),
+    },
+  ];
+
+  for (const { pattern, parser } of datePatterns) {
+    const match = trimmedStr.match(pattern);
+    if (match) {
+      const parsed = parser(match);
+      if (!isNaN(parsed.getTime())) {
+        return parsed;
+      }
+    }
+  }
+
+  // Try ISO format with time (YYYY-MM-DDTHH:mm:ss, etc.)
   const isoDate = new Date(trimmedStr);
   if (!isNaN(isoDate.getTime())) {
     return isoDate;
   }
 
-  // Try numeric timestamp
+  // Try numeric timestamp (must be reasonable - between year 1970 and 2100 approx as ms)
   const timestamp = parseFloat(trimmedStr);
-  if (!isNaN(timestamp)) {
+  if (
+    !isNaN(timestamp) &&
+    timestamp > 10000000000 &&
+    timestamp < 5000000000000
+  ) {
     return new Date(timestamp);
   }
 
-  // Try common date formats without separators
-  const parts = [4, 2, 2];
-  for (const part of parts) {
-    const dateStrTry = trimmedStr;
-
-    // Insert dates for position
-    if (part === 4) {
-      const partsArr = dateStrTry.split('-');
-      if (partsArr.length === 3) {
-        const parsed = new Date(
-          `${partsArr[0] ?? '2000'}-${partsArr[1] || '00'}-${
-            partsArr[2] || '00'
-          }`
-        );
-        if (!isNaN(parsed.getTime())) {
-          return parsed;
-        }
-      }
-    } else if (part === 2) {
-      const partsArr = dateStrTry.split('-');
-      if (partsArr.length === 3 && partsArr[1]) {
-        const parsed = new Date(
-          dateStrTry.replace(
-            '-',
-            '-' + partsArr[1].substring(0, 2) + '-' + (partsArr[2] || '00')
-          )
-        );
-        if (!isNaN(parsed.getTime())) {
-          return parsed;
-        }
-      }
+  // Try common date formats without separators (YYYYMMDD)
+  if (trimmedStr.length === 8 && /^\d+$/.test(trimmedStr)) {
+    const year = trimmedStr.substring(0, 4);
+    const month = trimmedStr.substring(4, 6);
+    const day = trimmedStr.substring(6, 8);
+    const parsed = new Date(`${year}-${month}-${day}`);
+    if (!isNaN(parsed.getTime())) {
+      return parsed;
     }
   }
 

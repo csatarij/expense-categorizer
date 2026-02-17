@@ -138,6 +138,28 @@ describe('fileParser', () => {
       });
     });
 
+    it('should parse CSV with semicolon separator (German style)', async () => {
+      const csvContent =
+        'Date;Description;Amount\n2024-01-01;Test Transaction;-50.00';
+      const file = createMockFile(csvContent, 'test.csv');
+      const result = await parseCSV(file);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]?.Description).toBe('Test Transaction');
+      expect(result[0]?.Amount).toBe('-50.00');
+    });
+
+    it('should parse CSV with tab separator', async () => {
+      const csvContent =
+        'Date\tDescription\tAmount\n2024-01-01\tTest Transaction\t-50.00';
+      const file = createMockFile(csvContent, 'test.csv');
+      const result = await parseCSV(file);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]?.Description).toBe('Test Transaction');
+      expect(result[0]?.Amount).toBe('-50.00');
+    });
+
     it('should handle CSV with multiple rows', async () => {
       const csvContent =
         'Date,Description,Amount\n2024-01-01,First,-10\n2024-01-02,Second,-20\n2024-01-03,Third,-30';
@@ -176,6 +198,23 @@ describe('fileParser', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0]?.Description).toBe('');
+    });
+
+    it('should handle CSV with outer quotes wrapping entire lines', async () => {
+      const csvContent =
+        '"date,""transaction"",""description"",""amount"",""balance"",""currency"""\r\n"2025-07-01,""INT"",""Interest earned"",""11.27"",""6053.97"",""CAD"""';
+      const file = createMockFile(csvContent, 'test.csv');
+      const result = await parseCSV(file);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({
+        date: '2025-07-01',
+        transaction: 'INT',
+        description: 'Interest earned',
+        amount: '11.27',
+        balance: '6053.97',
+        currency: 'CAD',
+      });
     });
   });
 

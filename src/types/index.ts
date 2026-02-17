@@ -68,6 +68,7 @@ export interface ColumnMapping {
   subcategory?: string;
   debit?: string;
   credit?: string;
+  balance?: string;
 }
 
 /**
