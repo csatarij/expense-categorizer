@@ -47,6 +47,7 @@ export const COLUMN_PATTERNS: Record<keyof ColumnMapping, string[]> = {
   credit: ['credit', 'deposit', 'credit amount', 'money in'],
   category: ['category', 'type', 'class', 'classification', 'expense type'],
   subcategory: ['subcategory', 'sub-category', 'sub category', 'subtype'],
+  balance: ['balance', 'running balance', 'account balance'],
 };
 
 /**
