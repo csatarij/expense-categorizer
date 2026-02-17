@@ -10,7 +10,7 @@ export interface TransactionTableProps {
     subcategory?: string
   ) => void;
   onNotesChange?: (id: string, notes: string) => void;
-  sortColumn?: string;
+  sortColumn?: string | null;
   sortDirection?: 'asc' | 'desc';
   onSort?: (column: string, direction: 'asc' | 'desc') => void;
 }

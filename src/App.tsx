@@ -32,7 +32,7 @@ function App() {
     duplicateCount: number;
   } | null>(null);
 
-  const [sortColumn, setSortColumn] = useState<string>('date');
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [filterValues, setFilterValues] = useState<FilterValues>({
     dateRange: { start: null, end: null },
