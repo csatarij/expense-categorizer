@@ -6,6 +6,7 @@ import { MergeSummary } from '@/components/MergeSummary';
 import { FileList } from '@/components/FileList';
 import { CategorizationControls } from '@/components/CategorizationControls';
 import { FilterPanel } from '@/components/FilterPanel/FilterPanel';
+import { MLTransparencyTab } from '@/components/MLTransparencyTab';
 import type { FilterValues } from '@/components/FilterPanel/FilterPanel';
 import { parseFile, FileParserError } from '@/utils/fileParser';
 import { mergeTransactionsWithMetadata } from '@/utils/fileExporter';
@@ -21,7 +22,10 @@ interface UploadedFileInfo {
   duplicateCount: number;
 }
 
+type AppTab = 'transactions' | 'ml-insights';
+
 function App() {
+  const [activeTab, setActiveTab] = useState<AppTab>('transactions');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -149,7 +153,6 @@ function App() {
         return baseTransaction;
       });
 
-      // Merge with existing transactions
       const { merged, duplicates, added } = mergeTransactionsWithMetadata(
         transactions,
         newTransactions
@@ -167,14 +170,12 @@ function App() {
         },
       ]);
 
-      // Show merge summary
       setMergeSummary({
         fileName: file.name,
         addedCount: added.length,
         duplicateCount: duplicates.length,
       });
 
-      // Auto-dismiss after 5 seconds
       setTimeout(() => {
         setMergeSummary(null);
       }, 5000);
@@ -360,101 +361,238 @@ function App() {
         </div>
       </header>
       <main className="mx-auto px-4 py-8">
-        <div className="rounded-lg bg-white p-6 shadow">
-          <h2 className="mb-4 text-xl font-semibold text-gray-800">
-            Welcome to Expense Categorizer
-          </h2>
-          <p className="text-gray-600">
-            Upload your bank statements to automatically categorize expenses
-            using machine learning.
-          </p>
-          <FileUpload onFileUpload={(file) => void handleFileUpload(file)} />
-
-          {mergeSummary && (
-            <MergeSummary
-              fileName={mergeSummary.fileName}
-              addedCount={mergeSummary.addedCount}
-              duplicateCount={mergeSummary.duplicateCount}
-              onDismiss={() => {
-                setMergeSummary(null);
-              }}
-            />
-          )}
-
-          {uploadedFiles.length > 0 && (
-            <FileList
-              files={uploadedFiles}
-              onRemoveFile={handleRemoveFile}
-              onClearAll={handleClearAll}
-            />
-          )}
-
-          {error && (
-            <div className="mt-4 rounded-md bg-red-50 p-4 text-red-700">
-              {error}
-            </div>
-          )}
-          {isLoading && (
-            <div className="mt-4 text-center text-gray-600">
-              Processing file...
-            </div>
-          )}
-
-          {transactions.length > 0 && (
-            <div className="mt-6">
-              <CategorizationControls
+        <div className="rounded-lg bg-white shadow">
+          <TabNavigation activeTab={activeTab} onChange={setActiveTab} />
+          <div className="p-6">
+            {activeTab === 'transactions' ? (
+              <TransactionsView
                 transactions={transactions}
-                onCategorize={setTransactions}
-              />
-            </div>
-          )}
-
-          {transactions.length > 0 && (
-            <div className="mt-6">
-              <FilterPanel
+                uploadedFiles={uploadedFiles}
+                isLoading={isLoading}
+                error={error}
+                mergeSummaryProp={mergeSummary}
+                filterValues={filterValues}
+                filteredAndSortedTransactions={filteredAndSortedTransactions}
                 availableSources={availableSources}
-                values={filterValues}
-                onChange={setFilterValues}
-              />
-              <div className="mb-4 flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800">
-                    {filteredAndSortedTransactions.length}{' '}
-                    {filteredAndSortedTransactions.length ===
-                    transactions.length
-                      ? 'Transactions'
-                      : `of ${String(transactions.length)} Transactions`}
-                  </h3>
-                  {filteredAndSortedTransactions.length !==
-                    transactions.length && (
-                    <span className="text-sm text-gray-500">
-                      Filters applied
-                    </span>
-                  )}
-                  {uploadedFiles.length > 0 &&
-                    filteredAndSortedTransactions.length ===
-                      transactions.length && (
-                      <span className="text-sm text-gray-500">
-                        From {uploadedFiles.length}{' '}
-                        {uploadedFiles.length === 1 ? 'file' : 'files'}
-                      </span>
-                    )}
-                </div>
-                <DownloadButton transactions={transactions} />
-              </div>
-              <TransactionTable
-                transactions={filteredAndSortedTransactions}
-                onCategoryChange={handleCategoryChange}
-                onNotesChange={handleNotesChange}
                 sortColumn={sortColumn}
                 sortDirection={sortDirection}
+                onFileUpload={handleFileUpload}
+                onRemoveFile={handleRemoveFile}
+                onClearAll={handleClearAll}
+                onCategorize={setTransactions}
+                onCategoryChange={handleCategoryChange}
+                onNotesChange={handleNotesChange}
                 onSort={handleSort}
+                onFilterChange={setFilterValues}
+                onMergeSummaryDismiss={() => { setMergeSummary(null); }}
               />
-            </div>
-          )}
+            ) : (
+              <MLTransparencyTab transactions={transactions} />
+            )}
+          </div>
         </div>
       </main>
     </div>
+  );
+}
+
+function TabNavigation({
+  activeTab,
+  onChange,
+}: {
+  activeTab: AppTab;
+  onChange: (tab: AppTab) => void;
+}) {
+  return (
+    <div className="border-b border-gray-200">
+      <nav className="flex space-x-8 px-6">
+        <TabButton
+          active={activeTab === 'transactions'}
+          onClick={() => { onChange('transactions'); }}
+        >
+          Transactions
+        </TabButton>
+        <TabButton
+          active={activeTab === 'ml-insights'}
+          onClick={() => { onChange('ml-insights'); }}
+        >
+          ML Insights
+        </TabButton>
+      </nav>
+    </div>
+  );
+}
+
+function TabButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`border-b-2 px-1 pb-3 text-sm font-medium transition-colors ${
+        active
+          ? 'border-primary-600 text-primary-600'
+          : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+interface TransactionsViewProps {
+  transactions: Transaction[];
+  uploadedFiles: UploadedFileInfo[];
+  isLoading: boolean;
+  error: string | null;
+  mergeSummaryProp: {
+    fileName: string;
+    addedCount: number;
+    duplicateCount: number;
+  } | null;
+  filterValues: FilterValues;
+  filteredAndSortedTransactions: Transaction[];
+  availableSources: string[];
+  sortColumn: string | null;
+  sortDirection: 'asc' | 'desc';
+  onFileUpload: (file: File) => Promise<void>;
+  onRemoveFile: (fileId: string) => void;
+  onClearAll: () => void;
+  onCategorize: (updatedTransactions: Transaction[]) => void;
+  onCategoryChange: (
+    id: string,
+    category: string,
+    subcategory?: string
+  ) => void;
+  onNotesChange: (id: string, notes: string) => void;
+  onSort: (column: string, direction: 'asc' | 'desc') => void;
+  onFilterChange: React.Dispatch<React.SetStateAction<FilterValues>>;
+  onMergeSummaryDismiss: () => void;
+}
+
+function TransactionsView({
+  transactions,
+  uploadedFiles,
+  isLoading,
+  error,
+  mergeSummaryProp,
+  filterValues,
+  filteredAndSortedTransactions,
+  availableSources,
+  sortColumn,
+  sortDirection,
+  onFileUpload,
+  onRemoveFile,
+  onClearAll,
+  onCategorize,
+  onCategoryChange,
+  onNotesChange,
+  onSort,
+  onFilterChange,
+  onMergeSummaryDismiss,
+}: TransactionsViewProps) {
+  return (
+    <>
+      {uploadedFiles.length === 0 && (
+        <>
+          <h2 className="mb-4 text-xl font-semibold text-gray-800">
+            Welcome to Expense Categorizer
+          </h2>
+          <p className="mb-6 text-gray-600">
+            Upload your bank statements to automatically categorize expenses
+            using machine learning.
+          </p>
+        </>
+      )}
+
+      <FileUpload
+        onFileUpload={(file) => {
+          void onFileUpload(file);
+        }}
+      />
+
+      {mergeSummaryProp && (
+        <MergeSummary
+          fileName={mergeSummaryProp.fileName}
+          addedCount={mergeSummaryProp.addedCount}
+          duplicateCount={mergeSummaryProp.duplicateCount}
+          onDismiss={onMergeSummaryDismiss}
+        />
+      )}
+
+      {uploadedFiles.length > 0 && (
+        <FileList
+          files={uploadedFiles}
+          onRemoveFile={onRemoveFile}
+          onClearAll={onClearAll}
+        />
+      )}
+
+      {error && (
+        <div className="mt-4 rounded-md bg-red-50 p-4 text-red-700">
+          {error}
+        </div>
+      )}
+      {isLoading && (
+        <div className="mt-4 text-center text-gray-600">Processing file...</div>
+      )}
+
+      {transactions.length > 0 && (
+        <div className="mt-6">
+          <CategorizationControls
+            transactions={transactions}
+            onCategorize={onCategorize}
+          />
+        </div>
+      )}
+
+      {transactions.length > 0 && (
+        <div className="mt-6">
+          <FilterPanel
+            availableSources={availableSources}
+            values={filterValues}
+            onChange={onFilterChange}
+          />
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800">
+                {filteredAndSortedTransactions.length}{' '}
+                {filteredAndSortedTransactions.length === transactions.length
+                  ? 'Transactions'
+                  : `of ${String(transactions.length)} Transactions`}
+              </h3>
+              {filteredAndSortedTransactions.length !== transactions.length && (
+                <span className="text-sm text-gray-500">Filters applied</span>
+              )}
+              {uploadedFiles.length > 0 &&
+                filteredAndSortedTransactions.length ===
+                  transactions.length && (
+                  <span className="text-sm text-gray-500">
+                    {' '}
+                    From {uploadedFiles.length}{' '}
+                    {uploadedFiles.length === 1 ? 'file' : 'files'}
+                  </span>
+                )}
+            </div>
+            <DownloadButton transactions={transactions} />
+          </div>
+          <TransactionTable
+            transactions={filteredAndSortedTransactions}
+            onCategoryChange={onCategoryChange}
+            onNotesChange={onNotesChange}
+            sortColumn={sortColumn}
+            sortDirection={sortDirection}
+            onSort={onSort}
+          />
+        </div>
+      )}
+    </>
   );
 }
 
