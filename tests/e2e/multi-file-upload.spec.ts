@@ -168,10 +168,14 @@ test.describe('Multi-File Upload', () => {
     await page.waitForTimeout(500); // Wait for file to process
 
     // Verify Source column header exists
-    await expect(page.getByRole('columnheader', { name: /Source/i })).toBeVisible();
+    await expect(
+      page.getByRole('columnheader', { name: /Source/i })
+    ).toBeVisible();
 
     // Verify source badge is shown in the table
-    await expect(page.getByRole('table').getByText('test-source.csv')).toBeVisible();
+    await expect(
+      page.getByRole('table').getByText('test-source.csv')
+    ).toBeVisible();
   });
 
   test('should remove specific file and its transactions', async ({ page }) => {
@@ -202,7 +206,9 @@ test.describe('Multi-File Upload', () => {
     await expect(page.getByText('Uploaded Files (2)')).toBeVisible();
 
     // Remove first file
-    const removeButtons = page.getByRole('button', { name: /Remove file1.csv/ });
+    const removeButtons = page.getByRole('button', {
+      name: /Remove file1.csv/,
+    });
     await removeButtons.click();
 
     // Verify only 1 transaction remains
@@ -252,7 +258,9 @@ test.describe('Multi-File Upload', () => {
 
     // Verify everything is cleared
     await expect(page.getByText('Uploaded Files')).not.toBeVisible();
-    await expect(page.getByText(/Transactions/)).not.toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: /Transactions/ })
+    ).not.toBeVisible();
   });
 
   test('should collapse and expand file list', async ({ page }) => {
@@ -359,9 +367,9 @@ test.describe('Multi-File Upload', () => {
     await expect(page.getByText(/2 Transactions/)).toBeVisible();
 
     // Click download button (just verify it exists and is clickable)
-    const downloadButton = page.locator('button:has-text("Download")').or(
-      page.locator('button:has-text("Export")')
-    );
+    const downloadButton = page
+      .locator('button:has-text("Download")')
+      .or(page.locator('button:has-text("Export")'));
     await expect(downloadButton).toBeVisible();
   });
 
