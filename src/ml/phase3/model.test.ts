@@ -13,8 +13,9 @@ import * as tf from '@tensorflow/tfjs';
 import type { Transaction } from '@/types';
 
 describe('Phase 3 ML Model', () => {
-  beforeAll(() => {
-    void tf.setBackend('cpu');
+  beforeAll(async () => {
+    await tf.setBackend('cpu');
+    await tf.ready();
   });
 
   function createTransaction(
