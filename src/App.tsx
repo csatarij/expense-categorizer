@@ -499,17 +499,7 @@ function TransactionsView({
 }: TransactionsViewProps) {
   return (
     <>
-      {uploadedFiles.length === 0 && (
-        <>
-          <h2 className="mb-4 text-xl font-semibold text-gray-800">
-            Welcome to Expense Categorizer
-          </h2>
-          <p className="mb-6 text-gray-600">
-            Upload your bank statements to automatically categorize expenses
-            using machine learning.
-          </p>
-        </>
-      )}
+      {uploadedFiles.length === 0 && <UserJourneyGuide />}
 
       <FileUpload
         onFileUpload={(file) => {
@@ -593,6 +583,92 @@ function TransactionsView({
         </div>
       )}
     </>
+  );
+}
+
+function UserJourneyGuide() {
+  const steps = [
+    {
+      number: 1,
+      title: 'Upload Your Bank Statement',
+      description:
+        'Drag and drop or select a CSV or XLSX file exported from your bank. You can upload multiple files — duplicates are detected automatically.',
+      detail: null,
+    },
+    {
+      number: 2,
+      title: 'Run Auto-Categorization',
+      description:
+        'Choose which AI phases to apply and click "Categorize Now". The engine works through three progressive phases:',
+      detail: (
+        <ol className="mt-2 space-y-1 text-sm text-gray-600">
+          <li className="flex gap-2">
+            <span className="font-semibold text-primary-600">Phase 1</span>
+            <span>
+              <span className="font-medium">Exact Match</span> — instantly
+              recognises transactions you have categorised before (95%+
+              confidence).
+            </span>
+          </li>
+          <li className="flex gap-2">
+            <span className="font-semibold text-primary-600">Phase 2</span>
+            <span>
+              <span className="font-medium">Pattern Matching</span> — uses
+              keyword rules, fuzzy matching, and TF-IDF similarity to handle
+              similar or slightly different descriptions.
+            </span>
+          </li>
+          <li className="flex gap-2">
+            <span className="font-semibold text-primary-600">Phase 3</span>
+            <span>
+              <span className="font-medium">ML Neural Network</span> — a
+              TensorFlow.js model trained on your own data for the highest
+              accuracy on new merchants. Train it once you have enough
+              categorised transactions.
+            </span>
+          </li>
+        </ol>
+      ),
+    },
+    {
+      number: 3,
+      title: 'Review & Fine-tune',
+      description:
+        'Check the transaction table, filter by date, amount, or category, and correct any categories with a single click. Your edits are used to improve future runs.',
+      detail: null,
+    },
+    {
+      number: 4,
+      title: 'Export Results',
+      description:
+        'Download the fully categorised data as a spreadsheet. Visit the ML Insights tab at any time to see how the model made its decisions.',
+      detail: null,
+    },
+  ];
+
+  return (
+    <div className="mb-8">
+      <h2 className="mb-1 text-xl font-semibold text-gray-800">
+        Welcome to Expense Categorizer
+      </h2>
+      <p className="mb-6 text-gray-500 text-sm">
+        Follow these steps to categorise your expenses with progressive AI.
+      </p>
+      <ol className="space-y-4">
+        {steps.map((step) => (
+          <li key={step.number} className="flex gap-4">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-600 text-sm font-bold text-white">
+              {step.number}
+            </div>
+            <div className="min-w-0">
+              <h3 className="font-semibold text-gray-800">{step.title}</h3>
+              <p className="mt-0.5 text-sm text-gray-600">{step.description}</p>
+              {step.detail}
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 }
 
