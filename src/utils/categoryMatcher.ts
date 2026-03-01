@@ -107,6 +107,28 @@ export function findBestMatch(
     }
   }
 
+  // If still no good match, try matching the input against subcategory names.
+  // This handles files where the category column uses subcategory-level terms
+  // (e.g. 'food', 'health', 'transport' instead of 'Food & Dining', 'Health & Wellness').
+  if (bestMatch.category === 'Uncategorized' || bestMatch.confidence < 0.7) {
+    for (const [category, subcategories] of Object.entries(DEFAULT_CATEGORIES)) {
+      for (const subcategory of subcategories) {
+        const subSimilarity = calculateSimilarity(
+          normalizedInput,
+          subcategory.toLowerCase()
+        );
+
+        if (subSimilarity > bestMatch.confidence) {
+          bestMatch = {
+            category,
+            subcategory,
+            confidence: subSimilarity,
+          };
+        }
+      }
+    }
+  }
+
   return bestMatch;
 }
 
