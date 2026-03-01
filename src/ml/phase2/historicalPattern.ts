@@ -81,7 +81,7 @@ function calculateRecurringInterval(dates: Date[]): {
   const averageInterval =
     intervals.reduce((sum, val) => sum + val, 0) / intervals.length;
 
-  let interval: RecurringPattern['recurringInterval'] = 'monthly';
+  let interval: RecurringPattern['recurringInterval'];
   if (averageInterval <= 2) interval = 'daily';
   else if (averageInterval <= 10) interval = 'weekly';
   else if (averageInterval <= 40) interval = 'monthly';
