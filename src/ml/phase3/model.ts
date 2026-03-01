@@ -356,7 +356,7 @@ export async function saveModel(): Promise<void> {
     }
   } catch (error) {
     console.error('Error saving model:', error);
-    throw new Error('Failed to save model to local storage');
+    throw new Error('Failed to save model to local storage', { cause: error });
   }
 }
 
