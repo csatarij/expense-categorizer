@@ -11,6 +11,9 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
+    // TF.js ML model initialization is CPU-intensive; allow enough time.
+    testTimeout: 30000,
+    hookTimeout: 30000,
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     coverage: {
