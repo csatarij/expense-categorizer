@@ -28,7 +28,7 @@ describe('App', () => {
 
   it('displays description text', () => {
     render(<App />);
-    expect(screen.getByText(/Upload your bank statements/)).toBeInTheDocument();
+    expect(screen.getByText(/Upload Your Bank Statement/)).toBeInTheDocument();
   });
 
   it('handles file upload and displays transactions with currency', async () => {
