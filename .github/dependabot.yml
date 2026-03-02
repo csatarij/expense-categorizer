@@ -11,6 +11,12 @@ updates:
       - "npm"
     commit-message:
       prefix: "chore(deps):"
+    ignore:
+      # eslint-plugin-react-hooks canary versions use hash-date suffixes that
+      # Dependabot cannot sort correctly, so it generates downgrade PRs.
+      # Update this package manually to ensure ESLint peer-dep compatibility.
+      - dependency-name: "eslint-plugin-react-hooks"
+        update-types: ["version-update:semver-patch", "version-update:semver-minor"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
