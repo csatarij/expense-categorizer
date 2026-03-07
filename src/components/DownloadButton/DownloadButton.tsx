@@ -4,24 +4,29 @@ import { exportTransactions, type ExportFormat } from '@/utils/fileExporter';
 
 export interface DownloadButtonProps {
   transactions: Transaction[];
+  filteredTransactions?: Transaction[];
   disabled?: boolean;
 }
 
 export function DownloadButton({
   transactions,
+  filteredTransactions,
   disabled = false,
 }: DownloadButtonProps): React.JSX.Element {
   const [isExporting, setIsExporting] = useState(false);
   const [showFormatMenu, setShowFormatMenu] = useState(false);
 
-  const handleExport = (format: ExportFormat) => {
+  const handleExport = (format: ExportFormat, useFiltered: boolean) => {
     setIsExporting(true);
     setShowFormatMenu(false);
 
+    const data = useFiltered && filteredTransactions ? filteredTransactions : transactions;
+
     try {
-      exportTransactions(transactions, {
+      const suffix = useFiltered && filteredTransactions ? '-filtered' : '';
+      exportTransactions(data, {
         format,
-        fileName: `expense-categorizer-${new Date().toISOString().split('T')[0] ?? 'export'}`,
+        fileName: `expense-categorizer${suffix}-${new Date().toISOString().split('T')[0] ?? 'export'}`,
         includeMetadata: false,
       });
     } catch (error) {
@@ -57,24 +62,45 @@ export function DownloadButton({
       </button>
 
       {showFormatMenu && !disabled && !isExporting && (
-        <div className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-none">
+        <div className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-none">
           <div className="py-1">
             <button
               onClick={() => {
-                handleExport('xlsx');
+                handleExport('xlsx', false);
               }}
               className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
             >
-              Download as Excel (.xlsx)
+              All as Excel (.xlsx)
             </button>
             <button
               onClick={() => {
-                handleExport('csv');
+                handleExport('csv', false);
               }}
               className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
             >
-              Download as CSV (.csv)
+              All as CSV (.csv)
             </button>
+            {filteredTransactions && (
+              <>
+                <hr className="my-1 border-gray-200" />
+                <button
+                  onClick={() => {
+                    handleExport('xlsx', true);
+                  }}
+                  className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Filtered ({filteredTransactions.length}) as Excel
+                </button>
+                <button
+                  onClick={() => {
+                    handleExport('csv', true);
+                  }}
+                  className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Filtered ({filteredTransactions.length}) as CSV
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}

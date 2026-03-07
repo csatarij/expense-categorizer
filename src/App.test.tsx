@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from './App';
@@ -12,6 +12,10 @@ function createMockFile(content: string, fileName: string): File {
 }
 
 describe('App', () => {
+  beforeEach(() => {
+    // Clear localStorage to prevent persistence from affecting tests
+    localStorage.clear();
+  });
   it('renders the header', () => {
     render(<App />);
     expect(

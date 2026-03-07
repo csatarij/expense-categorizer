@@ -134,24 +134,27 @@ export function exportTransactions(
  * Merges new transactions with existing ones from a file
  * This is useful for appending new transactions to an existing export
  */
+// #11: Normalized composite key for duplicate detection
+function makeDuplicateKey(t: Transaction): string {
+  const dateStr = t.date.toISOString().split('T')[0] ?? '';
+  const entity = t.entity.trim().toLowerCase();
+  return `${dateStr}-${entity}-${String(t.amount)}-${t.currency}`;
+}
+
 export function mergeTransactions(
   existing: Transaction[],
   newTransactions: Transaction[]
 ): Transaction[] {
-  // Create a map of existing transactions by a composite key
   const existingMap = new Map<string, Transaction>();
 
   existing.forEach((t) => {
-    const key = `${t.date.toISOString()}-${t.entity}-${String(t.amount)}-${t.currency}`;
-    existingMap.set(key, t);
+    existingMap.set(makeDuplicateKey(t), t);
   });
 
-  // Add new transactions, avoiding duplicates
   const merged = [...existing];
 
   newTransactions.forEach((t) => {
-    const key = `${t.date.toISOString()}-${t.entity}-${String(t.amount)}-${t.currency}`;
-    if (!existingMap.has(key)) {
+    if (!existingMap.has(makeDuplicateKey(t))) {
       merged.push(t);
     }
   });
@@ -195,18 +198,16 @@ export function mergeTransactionsWithMetadata(
   const duplicates: Transaction[] = [];
   const added: Transaction[] = [];
 
-  // Build map of existing transactions
+  // Build map of existing transactions using normalized key
   existing.forEach((t) => {
-    const key = `${t.date.toISOString()}-${t.entity}-${String(t.amount)}-${t.currency}`;
-    existingMap.set(key, t);
+    existingMap.set(makeDuplicateKey(t), t);
   });
 
   const merged = [...existing];
 
   // Check each new transaction for duplicates
   newTransactions.forEach((t) => {
-    const key = `${t.date.toISOString()}-${t.entity}-${String(t.amount)}-${t.currency}`;
-    if (existingMap.has(key)) {
+    if (existingMap.has(makeDuplicateKey(t))) {
       duplicates.push(t);
     } else {
       merged.push(t);

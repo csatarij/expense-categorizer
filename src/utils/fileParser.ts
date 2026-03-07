@@ -258,8 +258,21 @@ export async function parseCSV(file: File): Promise<Record<string, unknown>[]> {
 /**
  * Parses an XLSX file and returns the data as an array of objects
  */
+/**
+ * #17: Returns the list of sheet names from an XLSX file
+ */
+export async function getXLSXSheetNames(file: File): Promise<string[]> {
+  const arrayBuffer = await readFileAsArrayBuffer(file);
+  const workbook = XLSX.read(arrayBuffer, {
+    type: 'array',
+    bookSheets: true,
+  });
+  return workbook.SheetNames;
+}
+
 export async function parseXLSX(
-  file: File
+  file: File,
+  sheetNames?: string[]
 ): Promise<Record<string, unknown>[]> {
   try {
     const arrayBuffer = await readFileAsArrayBuffer(file);
@@ -268,22 +281,31 @@ export async function parseXLSX(
       cellDates: true,
       codepage: 65001,
     });
-    const firstSheetName = workbook.SheetNames[0];
 
-    if (!firstSheetName) {
+    if (workbook.SheetNames.length === 0) {
       throw new FileParserError('XLSX file contains no sheets', 'NO_DATA');
     }
 
-    const worksheet = workbook.Sheets[firstSheetName];
-    if (!worksheet) {
-      throw new FileParserError('XLSX file contains no sheets', 'NO_DATA');
-    }
-    const data = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet, {
-      defval: '',
-      raw: false,
-    });
+    // #17: Parse specified sheets, or all sheets if multiple exist
+    const sheetsToLoad = sheetNames ?? workbook.SheetNames;
+    const allData: Record<string, unknown>[] = [];
 
-    return data;
+    for (const name of sheetsToLoad) {
+      const worksheet = workbook.Sheets[name];
+      if (!worksheet) continue;
+
+      const data = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet, {
+        defval: '',
+        raw: false,
+      });
+      allData.push(...data);
+    }
+
+    if (allData.length === 0) {
+      throw new FileParserError('XLSX file contains no data', 'NO_DATA');
+    }
+
+    return allData;
   } catch (error) {
     if (error instanceof FileParserError) {
       throw error;
@@ -395,10 +417,12 @@ function detectColumnMappings(headers: string[]): ColumnMapping {
     mapping.debit = headers[debitIndex];
   }
 
-  // Credit detection
-  const creditPatterns = ['credit', 'deposit', 'in'];
+  // #16: Credit detection - use exact match for short words like "in"
+  const creditExactPatterns = ['in', 'credit in'];
+  const creditIncludesPatterns = ['credit', 'deposit'];
   const creditIndex = lowerHeaders.findIndex((h) =>
-    creditPatterns.some((p) => h === p || h.includes(p))
+    creditExactPatterns.some((p) => h === p) ||
+    creditIncludesPatterns.some((p) => h.includes(p))
   );
   if (creditIndex !== -1 && headers[creditIndex]) {
     mapping.credit = headers[creditIndex];

@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { FileUpload } from '@/components/FileUpload';
 import { TransactionTable } from '@/components/TransactionTable';
 import { DownloadButton } from '@/components/DownloadButton';
@@ -10,8 +10,14 @@ import { MLTransparencyTab } from '@/components/MLTransparencyTab';
 import type { FilterValues } from '@/components/FilterPanel/FilterPanel';
 import { parseFile, FileParserError } from '@/utils/fileParser';
 import { mergeTransactionsWithMetadata } from '@/utils/fileExporter';
-import { parseDate } from '@/utils/dateParser';
+import { parseDate, detectDateFormat } from '@/utils/dateParser';
 import { findBestMatch } from '@/utils/categoryMatcher';
+import {
+  saveTransactions,
+  loadTransactions,
+  saveUploadedFiles,
+  loadUploadedFiles,
+} from '@/utils/persistence';
 import type { Transaction, TransactionMetadata } from '@/types';
 
 interface UploadedFileInfo {
@@ -26,10 +32,18 @@ type AppTab = 'transactions' | 'ml-insights';
 
 function App() {
   const [activeTab, setActiveTab] = useState<AppTab>('transactions');
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>(() =>
+    loadTransactions()
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFileInfo[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFileInfo[]>(() => {
+    const stored = loadUploadedFiles();
+    return stored.map((f) => ({
+      ...f,
+      uploadedAt: new Date(f.uploadedAt),
+    }));
+  });
   const [mergeSummary, setMergeSummary] = useState<{
     fileName: string;
     addedCount: number;
@@ -47,6 +61,20 @@ function App() {
     selectedSources: new Set(),
   });
 
+  // #1: Persist transactions and files to localStorage on change
+  useEffect(() => {
+    saveTransactions(transactions);
+  }, [transactions]);
+
+  useEffect(() => {
+    saveUploadedFiles(
+      uploadedFiles.map((f) => ({
+        ...f,
+        uploadedAt: f.uploadedAt.toISOString(),
+      }))
+    );
+  }, [uploadedFiles]);
+
   const handleFileUpload = async (file: File) => {
     setIsLoading(true);
     setError(null);
@@ -54,6 +82,23 @@ function App() {
     try {
       const parsed = await parseFile(file);
       const fileId = `${file.name}-${String(Date.now())}`;
+
+      // #8: Detect date format from the full column before parsing individual rows
+      const cellToStringHelper = (value: unknown): string => {
+        if (value === null || value === undefined) return '';
+        if (typeof value === 'string') return value;
+        if (typeof value === 'number' || typeof value === 'boolean')
+          return String(value);
+        return '';
+      };
+
+      const dateOrder = parsed.detectedColumns.date
+        ? detectDateFormat(
+            parsed.data.map((row) =>
+              cellToStringHelper(row[parsed.detectedColumns.date ?? ''])
+            )
+          )
+        : 'unknown';
 
       const newTransactions: Transaction[] = parsed.data.map((row, index) => {
         const { detectedColumns } = parsed;
@@ -84,7 +129,7 @@ function App() {
         const dateStr = detectedColumns.date
           ? cellToString(row[detectedColumns.date])
           : '';
-        const date = parseDate(dateStr);
+        const date = parseDate(dateStr, new Date(), dateOrder);
 
         const notes = detectedColumns.notes
           ? cellToString(row[detectedColumns.notes])
@@ -112,7 +157,16 @@ function App() {
           }
         }
 
-        const baseTransaction = {
+        // #13: Build Transaction object directly without unsafe type assertion
+        const metadata: TransactionMetadata = {
+          source: 'upload' as const,
+          fileName: file.name,
+          fileId,
+          rowIndex: index,
+          rawData: row,
+        };
+
+        const transaction: Transaction = {
           id: `${fileId}-${String(index)}`,
           date: isNaN(date.getTime()) ? new Date() : date,
           entity: detectedColumns.entity
@@ -120,37 +174,14 @@ function App() {
             : '',
           amount,
           currency,
-          category: transactionCategory,
-          subcategory: transactionSubcategory,
-          notes,
           isManuallyEdited: false,
-          metadata: {
-            source: 'upload' as const,
-            fileName: file.name,
-            fileId,
-            rowIndex: index,
-            rawData: row,
-          },
-        } as unknown as {
-          id: string;
-          date: Date;
-          entity: string;
-          notes?: string;
-          amount: number;
-          currency: string;
-          category?: string;
-          subcategory?: string;
-          originalCategory?: string;
-          confidence?: number;
-          isManuallyEdited: boolean;
-          metadata: TransactionMetadata;
+          metadata,
+          ...(transactionCategory !== undefined ? { category: transactionCategory } : {}),
+          ...(transactionSubcategory !== undefined ? { subcategory: transactionSubcategory } : {}),
+          ...(notes ? { notes } : {}),
         };
 
-        if (notes) {
-          baseTransaction.notes = notes;
-        }
-
-        return baseTransaction;
+        return transaction;
       });
 
       const { merged, duplicates, added } = mergeTransactionsWithMetadata(
@@ -175,10 +206,6 @@ function App() {
         addedCount: added.length,
         duplicateCount: duplicates.length,
       });
-
-      setTimeout(() => {
-        setMergeSummary(null);
-      }, 5000);
     } catch (err) {
       if (err instanceof FileParserError) {
         setError(err.message);
@@ -191,24 +218,40 @@ function App() {
     }
   };
 
+  // #14: Store originalCategory when user manually edits
   const handleCategoryChange = (
     id: string,
     category: string,
     subcategory?: string
   ) => {
     setTransactions((prev) =>
-      prev.map((t) =>
-        t.id === id
-          ? {
-              ...t,
-              category,
-              ...(subcategory !== undefined ? { subcategory } : {}),
-              isManuallyEdited: true,
-            }
-          : t
-      )
+      prev.map((t): Transaction => {
+        if (t.id !== id) return t;
+        const orig = t.originalCategory ?? t.category;
+        return {
+          ...t,
+          ...(orig ? { originalCategory: orig } : {}),
+          category,
+          ...(subcategory !== undefined ? { subcategory } : {}),
+          isManuallyEdited: true,
+        };
+      })
     );
   };
+
+  // #14: Revert category to original AI suggestion
+  const handleRevertCategory = useCallback((id: string) => {
+    setTransactions((prev) =>
+      prev.map((t) => {
+        if (t.id !== id || !t.originalCategory) return t;
+        return {
+          ...t,
+          category: t.originalCategory,
+          isManuallyEdited: false,
+        };
+      })
+    );
+  }, []);
 
   const handleNotesChange = (id: string, notes: string) => {
     setTransactions((prev) =>
@@ -381,6 +424,7 @@ function App() {
                 onClearAll={handleClearAll}
                 onCategorize={setTransactions}
                 onCategoryChange={handleCategoryChange}
+                onRevertCategory={handleRevertCategory}
                 onNotesChange={handleNotesChange}
                 onSort={handleSort}
                 onFilterChange={setFilterValues}
@@ -470,6 +514,7 @@ interface TransactionsViewProps {
     category: string,
     subcategory?: string
   ) => void;
+  onRevertCategory: (id: string) => void;
   onNotesChange: (id: string, notes: string) => void;
   onSort: (column: string, direction: 'asc' | 'desc') => void;
   onFilterChange: React.Dispatch<React.SetStateAction<FilterValues>>;
@@ -492,11 +537,26 @@ function TransactionsView({
   onClearAll,
   onCategorize,
   onCategoryChange,
+  onRevertCategory,
   onNotesChange,
   onSort,
   onFilterChange,
   onMergeSummaryDismiss,
 }: TransactionsViewProps) {
+  // #7: Track merge summary timeout ref for proper cleanup
+  const mergeSummaryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const ref = mergeSummaryTimeoutRef;
+    return () => {
+      if (ref.current) {
+        clearTimeout(ref.current);
+      }
+    };
+  }, []);
+
+  const isFiltered = filteredAndSortedTransactions.length !== transactions.length;
+
   return (
     <>
       {uploadedFiles.length === 0 && <UserJourneyGuide />}
@@ -570,11 +630,16 @@ function TransactionsView({
                   </span>
                 )}
             </div>
-            <DownloadButton transactions={transactions} />
+            {/* #15: Pass both all and filtered transactions for export options */}
+            <DownloadButton
+              transactions={transactions}
+              {...(isFiltered ? { filteredTransactions: filteredAndSortedTransactions } : {})}
+            />
           </div>
           <TransactionTable
             transactions={filteredAndSortedTransactions}
             onCategoryChange={onCategoryChange}
+            onRevertCategory={onRevertCategory}
             onNotesChange={onNotesChange}
             sortColumn={sortColumn}
             sortDirection={sortDirection}
