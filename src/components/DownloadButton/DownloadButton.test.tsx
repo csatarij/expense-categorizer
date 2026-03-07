@@ -98,7 +98,7 @@ describe('DownloadButton', () => {
   });
 
   it('shows filtered export options when filteredTransactions provided', () => {
-    const filtered = [mockTransactions[0]!];
+    const filtered = [mockTransactions[0] as (typeof mockTransactions)[0]];
     render(
       <DownloadButton
         transactions={mockTransactions}
