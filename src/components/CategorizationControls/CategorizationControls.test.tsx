@@ -78,6 +78,27 @@ describe('CategorizationControls', () => {
     ).toBeInTheDocument();
   });
 
+  it('should have phase 1 and 2 checked by default', () => {
+    const onCategorize = vi.fn();
+    render(
+      <CategorizationControls transactions={[]} onCategorize={onCategorize} />
+    );
+
+    const phase1Checkbox = screen.getByRole('checkbox', {
+      name: /phase 1: exact match/i,
+    }) as HTMLInputElement;
+    const phase2Checkbox = screen.getByRole('checkbox', {
+      name: /phase 2: pattern matching/i,
+    }) as HTMLInputElement;
+    const phase3Checkbox = screen.getByRole('checkbox', {
+      name: /phase 3: ml model/i,
+    }) as HTMLInputElement;
+
+    expect(phase1Checkbox.checked).toBe(true);
+    expect(phase2Checkbox.checked).toBe(true);
+    expect(phase3Checkbox.checked).toBe(false);
+  });
+
   it('should toggle phase 1 when checkbox is clicked', async () => {
     const user = userEvent.setup();
     const onCategorize = vi.fn();
@@ -89,11 +110,12 @@ describe('CategorizationControls', () => {
       name: /phase 1: exact match/i,
     }) as HTMLInputElement;
 
-    expect(phase1Checkbox.checked).toBe(false);
+    // Phase 1 is checked by default
+    expect(phase1Checkbox.checked).toBe(true);
 
     await user.click(phase1Checkbox);
 
-    expect(phase1Checkbox.checked).toBe(true);
+    expect(phase1Checkbox.checked).toBe(false);
   });
 
   it('should toggle phase 2 when checkbox is clicked', async () => {
@@ -107,11 +129,12 @@ describe('CategorizationControls', () => {
       name: /phase 2: pattern matching/i,
     }) as HTMLInputElement;
 
-    expect(phase2Checkbox.checked).toBe(false);
+    // Phase 2 is checked by default
+    expect(phase2Checkbox.checked).toBe(true);
 
     await user.click(phase2Checkbox);
 
-    expect(phase2Checkbox.checked).toBe(true);
+    expect(phase2Checkbox.checked).toBe(false);
   });
 
   it('should toggle phase 3 when checkbox is clicked', async () => {
@@ -132,37 +155,23 @@ describe('CategorizationControls', () => {
     expect(phase3Checkbox.checked).toBe(true);
   });
 
-  it('should show phase 2 methods when phase 2 is selected', async () => {
-    const user = userEvent.setup();
+  it('should show phase 2 methods by default since phase 2 is selected', () => {
     const onCategorize = vi.fn();
     render(
       <CategorizationControls transactions={[]} onCategorize={onCategorize} />
     );
 
-    expect(screen.queryByText('Phase 2 Methods:')).not.toBeInTheDocument();
-
-    const phase2Checkbox = screen.getByRole('checkbox', {
-      name: /phase 2: pattern matching/i,
-    });
-
-    await user.click(phase2Checkbox);
-
+    // Phase 2 is selected by default, so methods should be visible
     expect(screen.getByText('Phase 2 Methods:')).toBeInTheDocument();
   });
 
-  it('should display phase 2 method toggles', async () => {
-    const user = userEvent.setup();
+  it('should display phase 2 method toggles', () => {
     const onCategorize = vi.fn();
     render(
       <CategorizationControls transactions={[]} onCategorize={onCategorize} />
     );
 
-    const phase2Checkbox = screen.getByRole('checkbox', {
-      name: /phase 2: pattern matching/i,
-    });
-
-    await user.click(phase2Checkbox);
-
+    // Phase 2 methods are visible by default
     expect(
       screen.getByRole('checkbox', { name: /keyword rules/i })
     ).toBeInTheDocument();
@@ -174,7 +183,7 @@ describe('CategorizationControls', () => {
     ).toBeInTheDocument();
   });
 
-  it('should disable categorize button by default', () => {
+  it('should enable categorize button by default since phases are selected', () => {
     const onCategorize = vi.fn();
     render(
       <CategorizationControls transactions={[]} onCategorize={onCategorize} />
@@ -184,7 +193,8 @@ describe('CategorizationControls', () => {
       name: 'Categorize Now',
     });
 
-    expect(categorizeButton).toBeDisabled();
+    // Phases 1 and 2 are selected by default
+    expect(categorizeButton).not.toBeDisabled();
   });
 
   it('should enable categorize button when phases are selected', async () => {
@@ -217,12 +227,7 @@ describe('CategorizationControls', () => {
       />
     );
 
-    const phase1Checkbox = screen.getByRole('checkbox', {
-      name: /phase 1: exact match/i,
-    });
-
-    await user.click(phase1Checkbox);
-
+    // Phases are already selected by default
     const categorizeButton = screen.getByRole('button', {
       name: 'Categorize Now',
     });
@@ -253,12 +258,7 @@ describe('CategorizationControls', () => {
       <CategorizationControls transactions={[]} onCategorize={onCategorize} />
     );
 
-    const phase2Checkbox = screen.getByRole('checkbox', {
-      name: /phase 2: pattern matching/i,
-    });
-
-    await user.click(phase2Checkbox);
-
+    // Phase 2 methods are already visible by default
     const keywordCheckbox = screen.getByRole('checkbox', {
       name: /keyword rules/i,
     }) as HTMLInputElement;
@@ -313,7 +313,7 @@ describe('CategorizationControls', () => {
     ).toBeInTheDocument();
   });
 
-  it('should not categorize if no phases selected', async () => {
+  it('should disable categorize button when all phases are unchecked', async () => {
     const user = userEvent.setup();
     const onCategorize = vi.fn();
 
@@ -324,12 +324,21 @@ describe('CategorizationControls', () => {
       />
     );
 
+    // Uncheck both default phases
+    const phase1Checkbox = screen.getByRole('checkbox', {
+      name: /phase 1: exact match/i,
+    });
+    const phase2Checkbox = screen.getByRole('checkbox', {
+      name: /phase 2: pattern matching/i,
+    });
+
+    await user.click(phase1Checkbox);
+    await user.click(phase2Checkbox);
+
     const categorizeButton = screen.getByRole('button', {
       name: 'Categorize Now',
     });
 
-    await user.click(categorizeButton);
-
-    expect(onCategorize).not.toHaveBeenCalled();
+    expect(categorizeButton).toBeDisabled();
   });
 });

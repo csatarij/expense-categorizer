@@ -47,8 +47,8 @@ describe('DownloadButton', () => {
     const button = screen.getByText('Download Results');
     fireEvent.click(button);
 
-    expect(screen.getByText('Download as Excel (.xlsx)')).toBeInTheDocument();
-    expect(screen.getByText('Download as CSV (.csv)')).toBeInTheDocument();
+    expect(screen.getByText('All as Excel (.xlsx)')).toBeInTheDocument();
+    expect(screen.getByText('All as CSV (.csv)')).toBeInTheDocument();
   });
 
   it('exports as XLSX when Excel option is clicked', () => {
@@ -57,7 +57,7 @@ describe('DownloadButton', () => {
     const button = screen.getByText('Download Results');
     fireEvent.click(button);
 
-    const xlsxOption = screen.getByText('Download as Excel (.xlsx)');
+    const xlsxOption = screen.getByText('All as Excel (.xlsx)');
     fireEvent.click(xlsxOption);
 
     expect(fileExporter.exportTransactions).toHaveBeenCalledWith(
@@ -74,7 +74,7 @@ describe('DownloadButton', () => {
     const button = screen.getByText('Download Results');
     fireEvent.click(button);
 
-    const csvOption = screen.getByText('Download as CSV (.csv)');
+    const csvOption = screen.getByText('All as CSV (.csv)');
     fireEvent.click(csvOption);
 
     expect(fileExporter.exportTransactions).toHaveBeenCalledWith(
@@ -91,9 +91,25 @@ describe('DownloadButton', () => {
     const button = screen.getByText('Download Results');
     fireEvent.click(button);
 
-    const xlsxOption = screen.getByText('Download as Excel (.xlsx)');
+    const xlsxOption = screen.getByText('All as Excel (.xlsx)');
     fireEvent.click(xlsxOption);
 
-    expect(screen.queryByText('Download as Excel (.xlsx)')).not.toBeInTheDocument();
+    expect(screen.queryByText('All as Excel (.xlsx)')).not.toBeInTheDocument();
+  });
+
+  it('shows filtered export options when filteredTransactions provided', () => {
+    const filtered = [mockTransactions[0]!];
+    render(
+      <DownloadButton
+        transactions={mockTransactions}
+        filteredTransactions={filtered}
+      />
+    );
+
+    const button = screen.getByText('Download Results');
+    fireEvent.click(button);
+
+    expect(screen.getByText('Filtered (1) as Excel')).toBeInTheDocument();
+    expect(screen.getByText('Filtered (1) as CSV')).toBeInTheDocument();
   });
 });

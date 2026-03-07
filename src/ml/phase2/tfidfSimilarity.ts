@@ -264,18 +264,30 @@ export function categorizeByTFIDF(
       !!t.category && t.category !== ''
   );
 
-  categorizedTransactions =
-    (amount ?? 0) > 0
-      ? categorizedTransactions.filter((t) => t.category === 'Income')
-      : categorizedTransactions.filter((t) => t.category !== 'Income');
+  // #12: Filter by amount sign instead of hardcoded "Income" category name
+  const isIncome = (amount ?? 0) > 0;
+  categorizedTransactions = isIncome
+    ? categorizedTransactions.filter((t) => t.amount > 0)
+    : categorizedTransactions.filter((t) => t.amount <= 0);
 
   if (categorizedTransactions.length === 0) {
     return null;
   }
 
-  const corpus = buildCorpus(categorizedTransactions);
-  const vocabulary = buildVocabulary(corpus);
-  const documentFrequency = computeDocumentFrequency(corpus);
+  // #4: Use cached model when available, fall back to building from scratch
+  let corpus: string[];
+  let vocabulary: string[];
+  let documentFrequency: Map<string, number>;
+
+  if (cachedModel && cachedModel.corpus.length > 0) {
+    corpus = cachedModel.corpus;
+    vocabulary = cachedModel.vocabulary;
+    documentFrequency = cachedModel.documentFrequency;
+  } else {
+    corpus = buildCorpus(categorizedTransactions);
+    vocabulary = buildVocabulary(corpus);
+    documentFrequency = computeDocumentFrequency(corpus);
+  }
   const normalizedDescription = normalizeText(description);
 
   const descriptionVector = buildTFIDFVector(

@@ -4,6 +4,7 @@ import {
   categorizeByKeywordRule,
   fuzzyMatch,
   categorizeByTFIDF,
+  trainTFIDFModel,
 } from '@/ml/phase2';
 import {
   initializeModel,
@@ -20,12 +21,21 @@ interface CategorizationControlsProps {
   onCategorize: (updatedTransactions: Transaction[]) => void;
 }
 
+// #2: Progress state
+interface CategorizationProgress {
+  current: number;
+  total: number;
+  categorized: number;
+}
+
 export function CategorizationControls({
   transactions,
   onCategorize,
 }: CategorizationControlsProps) {
-  const [selectedPhases, setSelectedPhases] = useState<number[]>([]);
+  // #3: Default to Phase 1 and 2 enabled
+  const [selectedPhases, setSelectedPhases] = useState<number[]>([1, 2]);
   const [isCategorizing, setIsCategorizing] = useState(false);
+  const [progress, setProgress] = useState<CategorizationProgress | null>(null);
   const [phase2Methods, setPhase2Methods] = useState<string[]>([
     'keyword',
     'fuzzy',
@@ -57,82 +67,98 @@ export function CategorizationControls({
     const categorizedTransactions = [...transactions];
     const historicalData = transactions.filter((t) => t.category);
 
+    // #4: Pre-train TF-IDF model once before the loop
+    if (selectedPhases.includes(2) && phase2Methods.includes('tfidf')) {
+      trainTFIDFModel(historicalData);
+    }
+
+    const uncategorizedIndices: number[] = [];
     for (let i = 0; i < categorizedTransactions.length; i++) {
-      const transaction = categorizedTransactions[i];
-      if (!transaction || transaction.category) {
-        continue;
+      const t = categorizedTransactions[i];
+      if (t && !t.category) {
+        uncategorizedIndices.push(i);
+      }
+    }
+
+    let categorizedCount = 0;
+    const total = uncategorizedIndices.length;
+
+    // #2: Process in batches for progress feedback
+    const BATCH_SIZE = 50;
+    for (let batchStart = 0; batchStart < uncategorizedIndices.length; batchStart += BATCH_SIZE) {
+      const batchEnd = Math.min(batchStart + BATCH_SIZE, uncategorizedIndices.length);
+
+      for (let b = batchStart; b < batchEnd; b++) {
+        const i = uncategorizedIndices[b];
+        if (i === undefined) continue;
+        const transaction = categorizedTransactions[i];
+        if (!transaction) continue;
+
+        let suggestion = null;
+
+        if (selectedPhases.includes(1)) {
+          suggestion = exactMatch(transaction.entity, historicalData);
+        }
+
+        if (!suggestion && selectedPhases.includes(2)) {
+          if (phase2Methods.includes('keyword')) {
+            suggestion ??= categorizeByKeywordRule(
+              transaction.entity,
+              DEFAULT_CATEGORIES
+            );
+          }
+
+          if (phase2Methods.includes('fuzzy') && !suggestion) {
+            suggestion ??= fuzzyMatch(
+              transaction.entity,
+              historicalData,
+              transaction.amount
+            );
+          }
+
+          if (phase2Methods.includes('tfidf') && !suggestion) {
+            suggestion ??= categorizeByTFIDF(
+              transaction.entity,
+              historicalData,
+              transaction.amount
+            );
+          }
+        }
+
+        if (!suggestion && selectedPhases.includes(3)) {
+          if (!isModelTrained()) {
+            continue;
+          }
+
+          try {
+            suggestion = await predictCategory(transaction.entity);
+          } catch (err) {
+            console.error('ML prediction error:', err);
+          }
+        }
+
+        if (suggestion) {
+          // #6: Spread original transaction to preserve all fields (notes, metadata, etc.)
+          categorizedTransactions[i] = {
+            ...transaction,
+            category: suggestion.category,
+            ...(suggestion.subcategory ? { subcategory: suggestion.subcategory } : {}),
+            confidence: suggestion.confidence / 100,
+            originalCategory: suggestion.category,
+            isManuallyEdited: false,
+          };
+          categorizedCount++;
+        }
       }
 
-      let suggestion = null;
-
-      if (selectedPhases.includes(1)) {
-        suggestion = exactMatch(transaction.entity, historicalData);
-      }
-
-      if (!suggestion && selectedPhases.includes(2)) {
-        if (phase2Methods.includes('keyword')) {
-          suggestion ??= categorizeByKeywordRule(
-            transaction.entity,
-            DEFAULT_CATEGORIES
-          );
-        }
-
-        if (phase2Methods.includes('fuzzy') && !suggestion) {
-          suggestion ??= fuzzyMatch(
-            transaction.entity,
-            historicalData,
-            transaction.amount
-          );
-        }
-
-        if (phase2Methods.includes('tfidf') && !suggestion) {
-          suggestion ??= categorizeByTFIDF(
-            transaction.entity,
-            historicalData,
-            transaction.amount
-          );
-        }
-      }
-
-      if (!suggestion && selectedPhases.includes(3)) {
-        if (!isModelTrained()) {
-          continue;
-        }
-
-        try {
-          suggestion = await predictCategory(transaction.entity);
-        } catch (err) {
-          console.error('ML prediction error:', err);
-        }
-      }
-
-      if (suggestion) {
-        const updatedTransaction: Transaction = {
-          id: transaction.id,
-          date: transaction.date,
-          entity: transaction.entity,
-          amount: transaction.amount,
-          currency: transaction.currency,
-          category: suggestion.category,
-          confidence: suggestion.confidence / 100,
-          originalCategory: suggestion.category,
-          isManuallyEdited: false,
-        };
-
-        if (suggestion.subcategory) {
-          updatedTransaction.subcategory = suggestion.subcategory;
-        }
-
-        if (transaction.metadata) {
-          updatedTransaction.metadata = transaction.metadata;
-        }
-
-        categorizedTransactions[i] = updatedTransaction;
-      }
+      // #2: Update progress after each batch, yield to UI
+      setProgress({ current: batchEnd, total, categorized: categorizedCount });
+      await new Promise((resolve) => { setTimeout(resolve, 0); });
     }
 
     onCategorize(categorizedTransactions);
     setIsCategorizing(false);
+    setProgress(null);
   }, [transactions, selectedPhases, phase2Methods, onCategorize]);
 
   const trainPhase3Model = useCallback(async () => {
@@ -283,6 +309,22 @@ export function CategorizationControls({
             {isTrainingModel ? 'Training...' : 'Train Phase 3 Model'}
           </button>
         </div>
+
+        {/* #2: Progress bar during categorization */}
+        {progress && (
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs text-gray-600">
+              <span>Processing {String(progress.current)} / {String(progress.total)} transactions</span>
+              <span>{String(progress.categorized)} categorized</span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
+              <div
+                className="bg-primary-600 h-full rounded-full transition-all duration-150"
+                style={{ width: `${String(progress.total > 0 ? (progress.current / progress.total) * 100 : 0)}%` }}
+              />
+            </div>
+          </div>
+        )}
 
         {modelMetrics && (
           <div className="mt-2 ml-2 rounded-lg border border-green-100 bg-green-50 p-3">

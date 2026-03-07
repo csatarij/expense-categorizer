@@ -2,15 +2,46 @@
  * Date parser utility for parsing date strings from transaction files
  */
 
+type DateOrder = 'mdy' | 'dmy' | 'unknown';
+
+/**
+ * #8: Detect date format from a column of date strings.
+ * If any value has a first number > 12, the column is DD/MM/YYYY.
+ * If any value has a second number > 12, the column is MM/DD/YYYY.
+ */
+export function detectDateFormat(dateStrings: string[]): DateOrder {
+  let hasDayFirst = false;
+  let hasMonthFirst = false;
+
+  for (const str of dateStrings) {
+    if (!str) continue;
+    const trimmed = str.trim();
+    const match = trimmed.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})$/);
+    if (!match) continue;
+
+    const first = parseInt(match[1] ?? '0', 10);
+    const second = parseInt(match[2] ?? '0', 10);
+
+    if (first > 12) hasDayFirst = true;
+    if (second > 12) hasMonthFirst = true;
+  }
+
+  if (hasDayFirst && !hasMonthFirst) return 'dmy';
+  if (hasMonthFirst && !hasDayFirst) return 'mdy';
+  return 'unknown';
+}
+
 /**
  * Tries to parse a date string using multiple strategies
  * @param dateStr - The date string to parse
  * @param fallbackDate - Optional fallback date if parsing fails
+ * @param dateOrder - Optional hint for date format order ('mdy' or 'dmy')
  * @returns A Date object or the fallback date if parsing fails
  */
 export function parseDate(
   dateStr: string,
-  fallbackDate: Date = new Date()
+  fallbackDate: Date = new Date(),
+  dateOrder: DateOrder = 'unknown'
 ): Date {
   if (!dateStr) {
     return fallbackDate;
@@ -25,9 +56,12 @@ export function parseDate(
     const second = parseInt(slashMatch[2] ?? '0', 10);
     const year = parseInt(slashMatch[3] ?? '0', 10);
 
-    // If first number > 12, treat as day (DD/MM/YYYY format)
-    // Otherwise, treat first as month (MM/DD/YYYY format)
-    if (first > 12) {
+    // Use dateOrder hint if available, otherwise fall back to heuristic
+    const isDayFirst =
+      dateOrder === 'dmy' ||
+      (dateOrder === 'unknown' && first > 12);
+
+    if (isDayFirst) {
       const parsed = new Date(year, second - 1, first);
       if (!isNaN(parsed.getTime())) {
         return parsed;
@@ -54,7 +88,18 @@ export function parseDate(
     },
     {
       pattern: /^(\d{1,2})-(\d{1,2})-(\d{4})$/,
-      parser: (m) => new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1])),
+      parser: (m) => {
+        const first = Number(m[1]);
+        const second = Number(m[2]);
+        const year = Number(m[3]);
+        const isDayFirst =
+          dateOrder === 'dmy' ||
+          (dateOrder === 'unknown' && first > 12);
+        if (isDayFirst) {
+          return new Date(year, second - 1, first);
+        }
+        return new Date(year, first - 1, second);
+      },
     },
     {
       pattern: /^(\d{4})\.(\d{1,2})\.(\d{1,2})$/,

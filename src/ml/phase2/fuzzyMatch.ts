@@ -2,7 +2,9 @@ import type { Transaction, CategorySuggestion } from '@/types';
 
 const SIMILARITY_THRESHOLD = 0.7;
 const MIN_SIMILARITY_FOR_MATCH = 0.6;
+const MAX_LENGTH_DIFF_RATIO = 0.4;
 
+// #5: Optimized Levenshtein using only two rows instead of full matrix
 function levenshteinDistance(str1: string, str2: string): number {
   const m = str1.length;
   const n = str2.length;
@@ -10,47 +12,31 @@ function levenshteinDistance(str1: string, str2: string): number {
   if (m === 0) return n;
   if (n === 0) return m;
 
-  const dp: number[][] = [];
-
-  const row0: number[] = [];
+  let prevRow: number[] = [];
   for (let j = 0; j <= n; j++) {
-    row0.push(j);
+    prevRow.push(j);
   }
-  dp.push(row0);
 
   for (let i = 1; i <= m; i++) {
-    const currentRow: number[] = [i];
+    const currRow: number[] = [i];
     for (let j = 1; j <= n; j++) {
       if (str1[i - 1] === str2[j - 1]) {
-        const prevRow = dp[i - 1];
-        if (prevRow) {
-          const val = prevRow[j - 1] ?? 0;
-          currentRow.push(val);
-        } else {
-          currentRow.push(j);
-        }
+        currRow.push(prevRow[j - 1] ?? 0);
       } else {
-        const prevRow = dp[i - 1];
-        if (prevRow) {
-          currentRow.push(
-            1 +
-              Math.min(
-                prevRow[j] ?? 0,
-                currentRow[j - 1] ?? 0,
-                prevRow[j - 1] ?? 0,
-                Number.MAX_SAFE_INTEGER
-              )
-          );
-        } else {
-          currentRow.push(i + j);
-        }
+        currRow.push(
+          1 +
+            Math.min(
+              prevRow[j] ?? 0,
+              currRow[j - 1] ?? 0,
+              prevRow[j - 1] ?? 0
+            )
+        );
       }
     }
-    dp.push(currentRow);
+    prevRow = currRow;
   }
 
-  const lastRow = dp[m];
-  return lastRow?.[n] ?? 0;
+  return prevRow[n] ?? 0;
 }
 
 function calculateSimilarity(str1: string, str2: string): number {
@@ -77,10 +63,12 @@ export function fuzzyMatch(
 
   const normalizedInput = description.toLowerCase().trim();
 
-  const filteredHistoricalData =
-    (amount ?? 0) > 0
-      ? historicalData.filter((t) => t.category === 'Income')
-      : historicalData.filter((t) => t.category !== 'Income');
+  // #12: Filter by amount sign instead of hardcoded "Income" category name
+  const isIncome = (amount ?? 0) > 0;
+  const filteredHistoricalData = historicalData.filter((t) => {
+    if (!t.category) return false;
+    return isIncome ? t.amount > 0 : t.amount <= 0;
+  });
 
   let bestMatch: (Transaction & { category: string }) | null = null;
   let bestSimilarity = 0;
@@ -91,6 +79,14 @@ export function fuzzyMatch(
     }
 
     const normalizedHistory = transaction.entity.toLowerCase().trim();
+
+    // #5: Skip candidates where length difference is too large
+    const lenDiff = Math.abs(normalizedInput.length - normalizedHistory.length);
+    const maxLen = Math.max(normalizedInput.length, normalizedHistory.length);
+    if (maxLen > 0 && lenDiff / maxLen > MAX_LENGTH_DIFF_RATIO) {
+      continue;
+    }
+
     const similarity = calculateSimilarity(normalizedInput, normalizedHistory);
 
     if (similarity > bestSimilarity && similarity >= MIN_SIMILARITY_FOR_MATCH) {
