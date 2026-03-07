@@ -41,18 +41,18 @@ describe('persistence', () => {
       const stored = localStorage.getItem('expense-categorizer-transactions');
       expect(stored).not.toBeNull();
 
-      const parsed = JSON.parse(stored!);
+      const parsed = JSON.parse(stored ?? '[]') as Record<string, unknown>[];
       expect(parsed).toHaveLength(2);
-      expect(parsed[0].entity).toBe('Grocery Store');
-      expect(parsed[1].category).toBe('Income');
+      expect(parsed[0]?.entity).toBe('Grocery Store');
+      expect(parsed[1]?.category).toBe('Income');
     });
 
     it('should serialize dates to ISO strings', () => {
       saveTransactions(mockTransactions);
 
       const stored = localStorage.getItem('expense-categorizer-transactions');
-      const parsed = JSON.parse(stored!);
-      expect(parsed[0].date).toBe('2024-01-15T00:00:00.000Z');
+      const parsed = JSON.parse(stored ?? '[]') as Record<string, unknown>[];
+      expect(parsed[0]?.date).toBe('2024-01-15T00:00:00.000Z');
     });
 
     it('should handle localStorage errors gracefully', () => {
@@ -76,8 +76,8 @@ describe('persistence', () => {
 
       const loaded = loadTransactions();
       expect(loaded).toHaveLength(2);
-      expect(loaded[0].entity).toBe('Grocery Store');
-      expect(loaded[0].date).toBeInstanceOf(Date);
+      expect(loaded[0]?.entity).toBe('Grocery Store');
+      expect(loaded[0]?.date).toBeInstanceOf(Date);
     });
 
     it('should return empty array when nothing stored', () => {
@@ -114,9 +114,9 @@ describe('persistence', () => {
 
       const stored = localStorage.getItem('expense-categorizer-files');
       expect(stored).not.toBeNull();
-      const parsed = JSON.parse(stored!);
+      const parsed = JSON.parse(stored ?? '[]') as Record<string, unknown>[];
       expect(parsed).toHaveLength(1);
-      expect(parsed[0].name).toBe('bank-statement.csv');
+      expect(parsed[0]?.name).toBe('bank-statement.csv');
     });
 
     it('should handle localStorage errors gracefully', () => {
@@ -140,7 +140,7 @@ describe('persistence', () => {
 
       const loaded = loadUploadedFiles();
       expect(loaded).toHaveLength(1);
-      expect(loaded[0].name).toBe('bank-statement.csv');
+      expect(loaded[0]?.name).toBe('bank-statement.csv');
     });
 
     it('should return empty array when nothing stored', () => {

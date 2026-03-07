@@ -129,7 +129,7 @@ describe('DownloadButton', () => {
       filtered,
       expect.objectContaining({
         format: 'xlsx',
-        fileName: expect.stringContaining('-filtered-'),
+        fileName: expect.stringContaining('-filtered-') as string,
       })
     );
   });
@@ -150,7 +150,7 @@ describe('DownloadButton', () => {
       filtered,
       expect.objectContaining({
         format: 'csv',
-        fileName: expect.stringContaining('-filtered-'),
+        fileName: expect.stringContaining('-filtered-') as string,
       })
     );
   });
